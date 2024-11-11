@@ -14,6 +14,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let wordIndex = 0;
     let intervalId;
 
+    // Funzione per mostrare lo spinner
+    function showSpinner() {
+        spinner.style.display = 'block';
+    }
+
+    // Funzione per nascondere lo spinner
+    function hideSpinner() {
+        spinner.style.display = 'none';
+    }
+
+    // Evento per il caricamento del file EPUB
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file && file.name.endsWith('.epub')) {
@@ -35,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     rendition.display().then(() => {
                         console.log('EPUB caricato correttamente.');
+                        alert('EPUB caricato correttamente!');
                     }).catch(err => {
                         console.error('Errore durante la visualizzazione:', err);
                         alert('Errore durante la visualizzazione dell\'EPUB. Controlla la console per maggiori dettagli.');
@@ -54,13 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Evento per iniziare la lettura
     startButton.addEventListener('click', () => {
         if (!book) {
             alert('Per favore, carica un file EPUB prima.');
             return;
         }
 
-        spinner.style.display = 'block';
+        showSpinner();
 
         // Recupera tutto il testo
         book.ready.then(() => {
@@ -68,7 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let fullText = '';
             const promises = spineItems.map(item => {
                 return book.load(item).then(contents => {
-                    return contents.document.body.innerText;
+                    // Estrarre solo il testo visibile
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(contents.document.documentElement.innerHTML, 'text/html');
+                    return doc.body.innerText;
                 }).catch(err => {
                     console.error(`Errore nel caricamento della sezione ${item.id}:`, err);
                     return '';
@@ -82,23 +98,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 wordIndex = 0;
                 // Inizia la sottolineatura
                 startHighlighting();
-                spinner.style.display = 'none';
+                hideSpinner();
             }).catch(err => {
                 console.error('Errore nel recupero del testo:', err);
                 alert('Errore nel recupero del testo dell\'EPUB. Controlla la console per maggiori dettagli.');
-                spinner.style.display = 'none';
+                hideSpinner();
             });
         }).catch(err => {
             console.error('Errore nel preparare il libro:', err);
             alert('Errore nel preparare il libro. Controlla la console per maggiori dettagli.');
-            spinner.style.display = 'none';
+            hideSpinner();
         });
     });
 
+    // Evento per fermare la lettura
     stopButton.addEventListener('click', () => {
         clearInterval(intervalId);
+        // Rimuove tutte le sottolineature
+        const spans = readerDiv.querySelectorAll('span');
+        spans.forEach(span => span.classList.remove('highlight'));
+        wordIndex = 0;
     });
 
+    // Funzione per iniziare la sottolineatura delle parole
     function startHighlighting() {
         const speed = parseInt(speedInput.value) || 5; // parole al secondo
         const interval = 1000 / speed;
@@ -123,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 wordIndex++;
             } else {
                 clearInterval(intervalId);
+                alert('Lettura completata!');
             }
         }, interval);
     }
