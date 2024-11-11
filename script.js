@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const startButton = document.getElementById('start');
     const stopButton = document.getElementById('stop');
     const speedInput = document.getElementById('speed');
+    const spinner = document.getElementById('spinner');
 
     let book;
     let rendition;
@@ -16,15 +17,36 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file && file.name.endsWith('.epub')) {
+            // Pulisce eventuali letture precedenti
+            if (rendition) {
+                rendition.destroy();
+                readerDiv.innerHTML = '';
+            }
+
             const reader = new FileReader();
             reader.onload = function(event) {
                 const arrayBuffer = event.target.result;
-                book = ePub(arrayBuffer);
-                rendition = book.renderTo("reader", {
-                    width: "100%",
-                    height: "100%",
-                });
-                rendition.display();
+                try {
+                    book = ePub(arrayBuffer);
+                    rendition = book.renderTo("reader", {
+                        width: "100%",
+                        height: "100%",
+                    });
+
+                    rendition.display().then(() => {
+                        console.log('EPUB caricato correttamente.');
+                    }).catch(err => {
+                        console.error('Errore durante la visualizzazione:', err);
+                        alert('Errore durante la visualizzazione dell\'EPUB. Controlla la console per maggiori dettagli.');
+                    });
+                } catch (error) {
+                    console.error('Errore nell\'inizializzazione di ePub.js:', error);
+                    alert('Errore nell\'inizializzazione di ePub.js. Controlla la console per maggiori dettagli.');
+                }
+            };
+            reader.onerror = function(error) {
+                console.error('Errore nella lettura del file:', error);
+                alert('Errore nella lettura del file EPUB.');
             };
             reader.readAsArrayBuffer(file);
         } else {
@@ -38,20 +60,38 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        spinner.style.display = 'block';
+
         // Recupera tutto il testo
-        book.loaded.spine.all().then((spineItems) => {
+        book.ready.then(() => {
+            const spineItems = book.spine.spineItems;
             let fullText = '';
-            const promises = spineItems.map(item => item.load()).map(c => c.then(section => {
-                fullText += section.document.body.innerText + ' ';
-                item.unload();
-            }));
-            Promise.all(promises).then(() => {
+            const promises = spineItems.map(item => {
+                return book.load(item).then(contents => {
+                    return contents.document.body.innerText;
+                }).catch(err => {
+                    console.error(`Errore nel caricamento della sezione ${item.id}:`, err);
+                    return '';
+                });
+            });
+
+            Promise.all(promises).then(texts => {
+                fullText = texts.join(' ');
                 // Suddivide il testo in parole
-                currentWords = fullText.split(/\s+/);
+                currentWords = fullText.split(/\s+/).filter(word => word.length > 0);
                 wordIndex = 0;
                 // Inizia la sottolineatura
                 startHighlighting();
+                spinner.style.display = 'none';
+            }).catch(err => {
+                console.error('Errore nel recupero del testo:', err);
+                alert('Errore nel recupero del testo dell\'EPUB. Controlla la console per maggiori dettagli.');
+                spinner.style.display = 'none';
             });
+        }).catch(err => {
+            console.error('Errore nel preparare il libro:', err);
+            alert('Errore nel preparare il libro. Controlla la console per maggiori dettagli.');
+            spinner.style.display = 'none';
         });
     });
 
@@ -78,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (wordIndex < spans.length) {
                 spans[wordIndex].classList.add('highlight');
+                // Scrolla verso la parola evidenziata
                 spans[wordIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 wordIndex++;
             } else {
