@@ -2,19 +2,32 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>EPUB Reader Semplice</title>
+    <title>EPUB Reader Avanzato</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>EPUB Reader Semplice</h1>
-
-    <div id="controls">
-        <input type="file" id="epubFile" accept=".epub" />
-    </div>
+    <header>
+        <h1>EPUB Reader Avanzato</h1>
+    </header>
 
     <div id="reader">
         <div id="spinner">Caricamento...</div>
+    </div>
+
+    <!-- Barra dei controlli fissa in basso -->
+    <div id="controls">
+        <input type="file" id="epubFile" accept=".epub" />
+
+        <label for="speed">Velocità:</label>
+        <button id="decreaseSpeed">-</button>
+        <span id="speedDisplay">5</span> parole al secondo
+        <button id="increaseSpeed">+</button>
+
+        <button id="start">Inizia Lettura</button>
+        <button id="pause">Pausa Lettura</button>
+        <button id="stop">Ferma Lettura</button>
+        <button id="toggleNightMode">Modalità Notte</button>
     </div>
 
     <!-- Includi JSZip tramite CDN -->
