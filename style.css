@@ -28,6 +28,7 @@ header {
     background-color: transparent;
     padding: 20px;
     text-align: center;
+    position: relative; /* Per posizionare il toggle button */
 }
 
 header h1 {
@@ -44,6 +45,7 @@ header h1 {
     width: 100%;
     background-color: rgba(255, 255, 255, 0.95);
     transition: background-color 0.3s ease;
+    padding-top: 10px; /* Spazio per il toggle button */
 }
 
 /* Cambiamenti di colore per i temi */
@@ -60,7 +62,7 @@ body.sepia #controls-container {
     display: none; /* Nascondi di default, mostra solo su mobile */
     position: absolute;
     top: 10px;
-    right: 10px;
+    left: 10px; /* Spostato a sinistra per evitare sovrapposizione */
     background: none;
     border: none;
     font-size: 1.5em;
@@ -796,8 +798,16 @@ body.night #controls-bottom {
     background-color: rgba(46, 46, 46, 0.95);
 }
 
-body.sepia #controls-bottom {
-    background-color: rgba(244, 236, 216, 0.95);
+body.sepia #controls-bottom select {
+    background-color: #e0d7c6;
+    color: #5b4636;
+    border: 1px solid #a58e6d;
+}
+
+body.night #controls-bottom select {
+    background-color: #4a4a4a;
+    color: #f5f5f5;
+    border: 1px solid #888;
 }
 
 #controls-bottom select {
@@ -807,18 +817,6 @@ body.sepia #controls-bottom {
     border: 1px solid #ccc;
     border-radius: 4px;
     transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.night #controls-bottom select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-body.sepia #controls-bottom select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
 }
 
 /* Line Breaks dopo i punti */
@@ -1174,8 +1172,16 @@ body.night #controls-bottom {
     background-color: rgba(46, 46, 46, 0.95);
 }
 
-body.sepia #controls-bottom {
-    background-color: rgba(244, 236, 216, 0.95);
+body.sepia #controls-bottom select {
+    background-color: #e0d7c6;
+    color: #5b4636;
+    border: 1px solid #a58e6d;
+}
+
+body.night #controls-bottom select {
+    background-color: #4a4a4a;
+    color: #f5f5f5;
+    border: 1px solid #888;
 }
 
 #controls-bottom select {
@@ -1185,396 +1191,6 @@ body.sepia #controls-bottom {
     border: 1px solid #ccc;
     border-radius: 4px;
     transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.night #controls-bottom select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-body.sepia #controls-bottom select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
-}
-
-/* Line Breaks dopo i punti */
-br {
-    display: block;
-    content: "";
-    margin: 0;
-    padding: 0;
-}
-
-/* Scrolling del reader per allineare il testo */
-#reader {
-    scroll-behavior: smooth;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-    /* Adattamenti per tablet */
-    #reader {
-        padding: 30px;
-        margin: 15px auto;
-        max-width: 90%;
-    }
-
-    #controls-top button,
-    #controls-top-second-row button,
-    #playback-controls button {
-        padding: 10px 14px;
-        margin: 3px;
-    }
-
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        padding: 6px;
-        margin: 2px;
-    }
-}
-
-@media (max-width: 768px) {
-    /* Mostra il pulsante di toggle */
-    .toggle-controls {
-        display: block;
-    }
-
-    /* Nascondi i controlli per default */
-    #controls-container .controls {
-        max-height: 0;
-        opacity: 0;
-        visibility: hidden;
-        overflow: hidden;
-    }
-
-    /* Quando i controlli sono visibili */
-    #controls-container.active .controls {
-        max-height: 1000px; /* Altezza massima sufficiente */
-        opacity: 1;
-        visibility: visible;
-    }
-
-    /* Disporre i controlli in colonne */
-    #controls-top,
-    #controls-top-second-row,
-    #playback-controls {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    /* Ridurre la dimensione dei pulsanti */
-    #controls-top button,
-    #controls-top-second-row button,
-    #playback-controls button {
-        padding: 10px 14px;
-        margin: 4px 0;
-        font-size: 1.2em;
-    }
-
-    /* Ridurre la dimensione dei selettori */
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        width: 80%;
-        margin: 4px 0;
-    }
-
-    /* Ottimizzare il reader per schermi piccoli */
-    #reader {
-        padding: 20px;
-        margin: 10px auto;
-        max-width: 100%;
-    }
-
-    /* Ridurre il font del reader */
-    #reader-content {
-        font-size: 16px;
-    }
-
-    /* Pulsanti playback più grandi */
-    #playback-controls button {
-        font-size: 2em;
-        padding: 16px 24px;
-    }
-}
-
-@media (max-width: 480px) {
-    header h1 {
-        font-size: 1.5em;
-    }
-
-    /* Ottimizzare i pulsanti di playback */
-    #playback-controls button {
-        font-size: 2.5em;
-        padding: 20px 28px;
-    }
-
-    /* Adattare ulteriormente il layout */
-    #controls-top,
-    #controls-top-second-row,
-    #playback-controls,
-    #controls-bottom {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    /* Aumentare la larghezza dei selettori */
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        width: 100%;
-    }
-
-    /* Ottimizzare ulteriormente il reader */
-    #reader-content {
-        font-size: 14px;
-    }
-}
-
-/* Spacing tra gli elementi */
-#controls-top > *,
-#controls-top-second-row > * {
-    margin: 2px 4px;
-}
-
-/* Pulsanti */
-#controls-top button,
-#controls-top-second-row button,
-#playback-controls button {
-    padding: 12px 16px;
-    margin: 4px;
-    font-size: 1em;
-    cursor: pointer;
-    border: none;
-    background-color: transparent;
-    color: inherit;
-    transition: color 0.3s ease, background-color 0.3s ease;
-    border-radius: 4px;
-}
-
-#controls-top button i,
-#controls-top-second-row button i,
-#playback-controls button i {
-    font-size: 1em;
-}
-
-#controls-top button:hover,
-#controls-top-second-row button:hover,
-#playback-controls button:hover {
-    color: #007BFF;
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-/* Selettori */
-#controls-top select,
-#controls-top-second-row select {
-    padding: 8px;
-    margin: 2px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.night #controls-top select,
-body.night #controls-top-second-row select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-body.sepia #controls-top select,
-body.sepia #controls-top-second-row select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
-}
-
-/* Etichette e span */
-#controls-top label,
-#controls-top-second-row label,
-#playback-controls label {
-    margin: 0 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-}
-
-#controls-top span,
-#controls-top-second-row span {
-    margin: 0 5px;
-    min-width: 30px;
-    text-align: center;
-    display: inline-block;
-    font-size: 0.9em;
-}
-
-/* Pulsanti playback (PLAY, PAUSA, STOP) più grandi */
-#playback-controls button {
-    font-size: 1.5em;
-    padding: 12px 20px;
-    margin: 5px;
-    border: 1px solid #ccc;
-}
-
-#playback-controls button i {
-    font-size: 1em;
-}
-
-/* Pulsante di selezione file personalizzato */
-.custom-file-upload {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    background-color: transparent;
-    color: inherit;
-}
-
-.custom-file-upload:hover {
-    background-color: #007BFF;
-    color: white;
-}
-
-#epubFile {
-    display: none;
-}
-
-/* Il reader */
-#reader {
-    padding: 40px;
-    margin: 20px auto;
-    max-width: 800px;
-    overflow-y: auto;
-    position: relative;
-    font-size: 18px;
-    font-family: 'Georgia', serif;
-    line-height: var(--line-height, 28.8px);
-    /* Sfondo a righe del quaderno */
-    background: repeating-linear-gradient(
-        white,
-        white calc(var(--line-height) - 1px),
-        #e6e6e6 calc(var(--line-height) - 1px),
-        #e6e6e6 var(--line-height)
-    );
-    /* Mantieni lo sfondo fisso durante lo spostamento del testo */
-    background-attachment: scroll;
-}
-
-/* Temi per il reader */
-body.sepia #reader {
-    background: repeating-linear-gradient(
-        #f4ecd8,
-        #f4ecd8 calc(var(--line-height) - 1px),
-        #e0d7c6 calc(var(--line-height) - 1px),
-        #e0d7c6 var(--line-height)
-    );
-}
-
-body.night #reader {
-    background: repeating-linear-gradient(
-        #2e2e2e,
-        #2e2e2e calc(var(--line-height) - 1px),
-        #424242 calc(var(--line-height) - 1px),
-        #424242 var(--line-height)
-    );
-}
-
-#reader img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 10px auto;
-}
-
-/* Contenuto del reader che verrà spostato */
-#reader-content {
-    transform: translateY(0px);
-    transition: transform 0.2s ease;
-}
-
-/* Stili per le parole */
-.word {
-    display: inline;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    white-space: normal; /* Assicurarsi che lo spazio bianco venga gestito correttamente */
-}
-
-/* Evidenziazione */
-.word.highlight {
-    background-color: var(--highlight-color) !important;
-}
-
-/* Spinner di caricamento */
-#spinner {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1.5em;
-}
-
-body.classic #spinner {
-    color: #555;
-}
-
-body.sepia #spinner {
-    color: #5b4636;
-}
-
-body.night #spinner {
-    color: #f5f5f5;
-}
-
-/* Barra dei controlli in basso per l'indice */
-#controls-bottom {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    transition: background-color 0.3s ease;
-}
-
-body.night #controls-bottom {
-    background-color: rgba(46, 46, 46, 0.95);
-}
-
-body.sepia #controls-bottom {
-    background-color: rgba(244, 236, 216, 0.95);
-}
-
-#controls-bottom select {
-    padding: 8px;
-    margin: 2px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.night #controls-bottom select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-body.sepia #controls-bottom select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
 }
 
 /* Line Breaks dopo i punti */
