@@ -149,17 +149,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listener per aumentare la velocità
     increaseSpeedButton.addEventListener('click', () => {
-        if (speed < 1000) {
+        if (speed < 1000) { // Limite superiore
             speed += 10;
             updateSpeedDisplay();
+            if (!isPaused) {
+                restartHighlighting();
+            }
         }
     });
 
     // Event listener per diminuire la velocità
     decreaseSpeedButton.addEventListener('click', () => {
-        if (speed > 10) {
+        if (speed > 10) { // Limite inferiore
             speed -= 10;
             updateSpeedDisplay();
+            if (!isPaused) {
+                restartHighlighting();
+            }
         }
     });
 
@@ -172,12 +178,21 @@ document.addEventListener('DOMContentLoaded', () => {
     moveTextUpButton.addEventListener('click', () => {
         verticalOffset -= 1; // Modifica l'offset a piacere
         readerDiv.style.transform = `translateY(${verticalOffset}px)`;
+        // Imposta il background fisso per allineamento
+        readerDiv.classList.add('background-fixed');
     });
 
     // Event listener per spostare il testo verso il basso
     moveTextDownButton.addEventListener('click', () => {
         verticalOffset += 1; // Modifica l'offset a piacere
         readerDiv.style.transform = `translateY(${verticalOffset}px)`;
+        // Imposta il background fisso per allineamento
+        readerDiv.classList.add('background-fixed');
+    });
+
+    // Rimuovi la classe 'background-fixed' quando l'utente scorre normalmente
+    readerDiv.addEventListener('wheel', () => {
+        readerDiv.classList.remove('background-fixed');
     });
 
     // Event listener per cambiare la dimensione del testo
@@ -223,6 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         span.classList.add('highlight');
                         // Scrolla verso la parola selezionata
                         span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Avvia la lettura da questo punto
+                        if (!isPaused) {
+                            restartHighlighting();
+                        }
                     });
                 });
 
@@ -245,6 +264,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (spans.length === 0) {
             alert('Per favore, carica un file EPUB prima.');
             return;
+        }
+
+        if (!isPaused) {
+            wordIndex = 0;
         }
 
         isPaused = false;
@@ -275,6 +298,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (span) {
                 span.classList.add('highlight');
                 span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (!isPaused) {
+                    restartHighlighting();
+                }
             }
         }
     });
@@ -310,6 +336,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Lettura completata!');
             }
         }, interval);
+    }
+
+    // Funzione per riavviare la lettura mantenendo la posizione attuale
+    function restartHighlighting() {
+        clearInterval(intervalId);
+        startHighlighting(wordIndex);
     }
 
     // Funzione per estrarre il contenuto e l'indice dall'EPUB
@@ -348,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Gestisci le immagini
                     await handleImages(zip, fileDoc, filePath);
 
-                    // Avvolgi le parole in span
+                    // Avvolgi le parole in span e inserisci line breaks dopo i punti
                     const processedHTML = await wrapWordsInSpans(fileDoc.body.innerHTML);
 
                     // Mappa il capitolo all'indice delle parole
@@ -437,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return baseParts.join('/');
     }
 
-    // Funzione per avvolgere ogni parola in uno span
+    // Funzione per avvolgere ogni parola in uno span e inserire line breaks dopo i punti
     async function wrapWordsInSpans(htmlContent) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlContent, 'text/html');
@@ -452,11 +484,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const words = node.textContent.split(/(\s+)/); // Mantiene gli spazi
+                // Inserisci un'interruzione di linea dopo ogni punto seguito da uno spazio
+                const textContent = node.textContent.replace(/\. /g, '.\n');
+
+                const words = textContent.split(/(\s+)/); // Mantiene gli spazi e le nuove linee
+
                 const fragment = document.createDocumentFragment();
 
                 words.forEach(word => {
-                    if (/\s+/.test(word)) {
+                    if (word === '\n') {
+                        fragment.appendChild(document.createElement('br'));
+                    } else if (/\s+/.test(word)) {
                         fragment.appendChild(document.createTextNode(word));
                     } else {
                         const span = document.createElement('span');
@@ -497,4 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     `;
     document.head.appendChild(style);
+
+    // Funzione per inserire interruzioni di linea dopo i punti già gestita in wrapWordsInSpans()
+
 });
