@@ -97,7 +97,10 @@ body.night-mode #tocList button:hover {
     margin-left: auto;
     margin-right: auto;
     max-width: 800px;
-    overflow-y: auto; /* Permette lo scroll se il contenuto supera l'altezza del contenitore */
+
+    /* Rimuoviamo qualsiasi limitazione di altezza o overflow */
+    /* overflow-y: auto; */
+    /* height: auto; */
 
     /* Sfondo a righe che si muove con il testo */
     background: repeating-linear-gradient(
