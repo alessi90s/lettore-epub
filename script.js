@@ -11,12 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedDisplay = document.getElementById('speedDisplay');
     const spinner = document.getElementById('spinner');
     const toggleNightModeBtn = document.getElementById('toggleNightMode');
+    const tocSelect = document.getElementById('tocSelect');
 
     let wordIndex = 0;
     let intervalId;
     let speed = 5; // parole al secondo
     let isPaused = false;
     let spans = []; // Array globale di span.word
+    let chapterWordIndices = []; // Array per mappare i capitoli agli indici delle parole
 
     // Funzione per mostrare lo spinner
     function showSpinner() {
@@ -59,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 const zip = await JSZip.loadAsync(arrayBuffer);
-                const content = await extractContent(zip);
+                const { content, toc } = await extractContent(zip);
                 readerDiv.innerHTML = content;
 
                 // Aggiorna l'array globale di spans
@@ -75,6 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         span.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     });
                 });
+
+                // Popola il menu a tendina con l'indice
+                populateTOC(toc);
 
                 hideSpinner();
             } catch (error) {
@@ -117,6 +122,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.toggle('night-mode');
     });
 
+    // Evento per la selezione di un capitolo dal menu a tendina
+    tocSelect.addEventListener('change', () => {
+        const selectedIndex = tocSelect.selectedIndex - 1; // Il primo elemento è "Seleziona un capitolo"
+        if (selectedIndex >= 0 && chapterWordIndices[selectedIndex] !== undefined) {
+            wordIndex = chapterWordIndices[selectedIndex];
+            clearHighlights();
+            const span = spans[wordIndex];
+            if (span) {
+                span.classList.add('highlight');
+                span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+
     // Funzione per iniziare la sottolineatura delle parole
     function startHighlighting(startIndex) {
         const interval = 1000 / speed;
@@ -130,14 +149,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(intervalId);
                 return;
             }
-            if (wordIndex > startIndex) {
-                spans[wordIndex - 1].classList.remove('highlight');
+            // Rimuove l'highlight delle parole precedenti
+            for (let i = wordIndex - 4; i < wordIndex; i++) {
+                if (i >= 0 && spans[i]) {
+                    spans[i].classList.remove('highlight');
+                }
             }
             if (wordIndex < spans.length) {
-                spans[wordIndex].classList.add('highlight');
-                // Scrolla verso la parola evidenziata
+                // Evidenzia le prossime 3-4 parole
+                for (let i = 0; i < 4; i++) {
+                    if (spans[wordIndex + i]) {
+                        spans[wordIndex + i].classList.add('highlight');
+                    }
+                }
+                // Scrolla verso la prima parola evidenziata
                 spans[wordIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                wordIndex++;
+                wordIndex += 4; // Incrementa l'indice di 4 parole
             } else {
                 clearInterval(intervalId);
                 alert('Lettura completata!');
@@ -145,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, interval);
     }
 
-    // Funzione per estrarre il contenuto dall'EPUB
+    // Funzione per estrarre il contenuto e l'indice dall'EPUB
     async function extractContent(zip) {
         // Trova il percorso del file OPF (contenente il manifesto)
         const containerXML = await zip.file('META-INF/container.xml').async('string');
@@ -161,7 +188,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const spineItems = contentDoc.querySelectorAll('spine itemref');
         const manifestItems = contentDoc.querySelectorAll('manifest item');
 
+        // Estrae l'indice (TOC)
+        const tocItems = [];
+        const navItem = Array.from(manifestItems).find(item => item.getAttribute('properties') === 'nav');
+        if (navItem) {
+            const navHref = navItem.getAttribute('href');
+            const navFilePath = resolvePath(rootfilePath, navHref);
+            const navContent = await zip.file(navFilePath).async('string');
+            const navDoc = parser.parseFromString(navContent, 'application/xhtml+xml');
+            const navPoints = navDoc.querySelectorAll('nav[epub\\:type="toc"] li a');
+            navPoints.forEach((navPoint) => {
+                tocItems.push({
+                    title: navPoint.textContent.trim(),
+                    href: navPoint.getAttribute('href')
+                });
+            });
+        }
+
         let fullText = '';
+        let cumulativeWordCount = 0;
 
         for (let itemRef of spineItems) {
             const idref = itemRef.getAttribute('idref');
@@ -182,12 +227,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Avvolgi le parole in span
                     const processedHTML = await wrapWordsInSpans(fileDoc.body.innerHTML);
 
+                    // Mappa il capitolo all'indice delle parole
+                    const wordCountBefore = cumulativeWordCount;
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = processedHTML;
+                    const tempSpans = tempDiv.querySelectorAll('span.word');
+                    cumulativeWordCount += tempSpans.length;
+
+                    // Verifica se questo capitolo corrisponde a una voce dell'indice
+                    const tocItem = tocItems.find(toc => toc.href.split('#')[0] === href);
+                    if (tocItem) {
+                        chapterWordIndices.push(wordCountBefore);
+                    }
+
                     fullText += processedHTML;
                 }
             }
         }
 
-        return fullText;
+        return { content: fullText, toc: tocItems };
+    }
+
+    // Funzione per popolare il menu a tendina dell'indice
+    function populateTOC(tocItems) {
+        tocSelect.innerHTML = '<option value="">Seleziona un capitolo</option>';
+        tocItems.forEach((tocItem, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = tocItem.title;
+            tocSelect.appendChild(option);
+        });
     }
 
     // Funzione per gestire le immagini all'interno dei capitoli
