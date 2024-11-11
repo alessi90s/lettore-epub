@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Lettore EPUB</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Includi una libreria di icone (ad esempio Font Awesome) -->
+    <!-- Includi una libreria di icone (Font Awesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="classic">
@@ -15,6 +15,7 @@
 
     <!-- Contenitore per le barre dei controlli in alto -->
     <div id="controls-container">
+        <!-- Prima riga di controlli -->
         <div id="controls-top">
             <!-- Pulsante per selezionare il file EPUB -->
             <label for="epubFile" class="custom-file-upload">
@@ -23,14 +24,14 @@
             <input type="file" id="epubFile" accept=".epub" />
 
             <!-- Frecce per regolare la posizione del testo -->
-            <button id="moveTextUp"><i class="fa fa-arrow-up"></i></button>
-            <button id="moveTextDown"><i class="fa fa-arrow-down"></i></button>
+            <button id="moveTextUp" title="Sposta il testo verso l'alto"><i class="fa fa-arrow-up"></i></button>
+            <button id="moveTextDown" title="Sposta il testo verso il basso"><i class="fa fa-arrow-down"></i></button>
 
             <!-- Controlli per la velocità -->
             <label for="speed">Velocità WPM:</label>
-            <button id="decreaseSpeed"><i class="fa fa-minus"></i></button>
+            <button id="decreaseSpeed" title="Diminuisci la velocità"><i class="fa fa-minus"></i></button>
             <span id="speedDisplay">200</span>
-            <button id="increaseSpeed"><i class="fa fa-plus"></i></button>
+            <button id="increaseSpeed" title="Aumenta la velocità"><i class="fa fa-plus"></i></button>
 
             <!-- Controlli per il numero di parole evidenziate -->
             <label for="wordCount">Parole:</label>
@@ -41,13 +42,6 @@
                 <option value="4">4</option>
                 <option value="5">5</option>
             </select>
-        </div>
-
-        <!-- Controlli per la lettura (centrati e più grandi) -->
-        <div id="playback-controls">
-            <button id="start"><i class="fa fa-play"></i></button>
-            <button id="pause"><i class="fa fa-pause"></i></button>
-            <button id="stop"><i class="fa fa-stop"></i></button>
         </div>
 
         <!-- Seconda riga di controlli -->
@@ -69,7 +63,7 @@
             <!-- Selettore della dimensione del testo -->
             <label for="fontSizeSelect">Dimensione Testo:</label>
             <select id="fontSizeSelect">
-                <!-- Opzioni da 8 a 32 -->
+                <!-- Opzioni da 8 a 32 verranno aggiunte in script.js -->
             </select>
 
             <!-- Selettore del font -->
@@ -79,12 +73,24 @@
                 <option value="'Times New Roman', serif">Times New Roman</option>
                 <option value="'Arial', sans-serif">Arial</option>
                 <option value="'Verdana', sans-serif">Verdana</option>
+                <!-- Aggiungi altri font se lo desideri -->
             </select>
+        </div>
+
+        <!-- Controlli di riproduzione (centrati e più grandi) -->
+        <div id="playback-controls">
+            <button id="start" title="Avvia la lettura"><i class="fa fa-play"></i></button>
+            <button id="pause" title="Metti in pausa la lettura"><i class="fa fa-pause"></i></button>
+            <button id="stop" title="Ferma la lettura"><i class="fa fa-stop"></i></button>
         </div>
     </div>
 
+    <!-- Il reader -->
     <div id="reader">
-        <div id="spinner">Caricamento...</div>
+        <div id="reader-content">
+            <div id="spinner">Caricamento...</div>
+            <!-- Il contenuto del libro EPUB verrà inserito qui -->
+        </div>
     </div>
 
     <!-- Barra dei controlli in basso per l'indice -->
