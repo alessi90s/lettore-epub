@@ -42,19 +42,20 @@ header h1 {
     top: 0;
     z-index: 1000;
     width: 100%;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.95);
     transition: background-color 0.3s ease;
 }
 
+/* Cambiamenti di colore per i temi */
 body.night #controls-container {
-    background-color: rgba(46, 46, 46, 0.9);
+    background-color: rgba(46, 46, 46, 0.95);
 }
 
 body.sepia #controls-container {
-    background-color: rgba(244, 236, 216, 0.9);
+    background-color: rgba(244, 236, 216, 0.95);
 }
 
-/* Prime righe di controlli */
+/* Prima riga di controlli */
 #controls-top,
 #controls-top-second-row,
 #playback-controls {
@@ -153,6 +154,10 @@ body.sepia #controls-top-second-row select {
     margin: 5px;
 }
 
+#playback-controls button i {
+    font-size: 1em;
+}
+
 /* Pulsante di selezione file personalizzato */
 .custom-file-upload {
     display: flex;
@@ -185,8 +190,6 @@ body.sepia #controls-top-second-row select {
     font-size: 18px;
     font-family: 'Georgia', serif;
     line-height: var(--line-height, 28.8px);
-    transform: translateY(0px);
-    transition: transform 0.2s ease;
     /* Sfondo a righe del quaderno */
     background: repeating-linear-gradient(
         white,
@@ -194,10 +197,11 @@ body.sepia #controls-top-second-row select {
         #e6e6e6 calc(var(--line-height) - 1px),
         #e6e6e6 var(--line-height)
     );
-    /* Rendere il background fisso quando necessario */
+    /* Mantieni lo sfondo fisso durante lo spostamento del testo */
     background-attachment: scroll;
 }
 
+/* Temi per il reader */
 body.sepia #reader {
     background: repeating-linear-gradient(
         #f4ecd8,
@@ -221,6 +225,12 @@ body.night #reader {
     height: auto;
     display: block;
     margin: 10px auto;
+}
+
+/* Contenuto del reader che verrà spostato */
+#reader-content {
+    transform: translateY(0px);
+    transition: transform 0.2s ease;
 }
 
 /* Stili per le parole */
@@ -264,7 +274,7 @@ body.night #spinner {
     position: sticky;
     bottom: 0;
     width: 100%;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.95);
     padding: 5px;
     display: flex;
     align-items: center;
@@ -274,11 +284,11 @@ body.night #spinner {
 }
 
 body.night #controls-bottom {
-    background-color: rgba(46, 46, 46, 0.9);
+    background-color: rgba(46, 46, 46, 0.95);
 }
 
 body.sepia #controls-bottom {
-    background-color: rgba(244, 236, 216, 0.9);
+    background-color: rgba(244, 236, 216, 0.95);
 }
 
 #controls-bottom select {
@@ -303,15 +313,6 @@ body.sepia #controls-bottom select {
 }
 
 /* Line Breaks dopo i punti */
-.word::after {
-    content: '';
-}
-
-.word.highlight::after {
-    content: '';
-}
-
-/* Aggiungere interruzioni di linea dopo i punti tramite JS */
 br {
     display: block;
     content: "";
@@ -324,7 +325,7 @@ br {
     scroll-behavior: smooth;
 }
 
-/* Media Queries per la Responsività */
+/* Responsive Design */
 @media (max-width: 768px) {
     /* Ridurre la dimensione dei pulsanti playback sui dispositivi mobili */
     #playback-controls button {
