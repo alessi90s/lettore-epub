@@ -30,11 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 const zip = await JSZip.loadAsync(arrayBuffer);
-                const fullText = await extractFullText(zip);
-                currentWords = fullText.split(/\s+/).filter(word => word.length > 0);
-                wordIndex = 0;
-                alert('EPUB caricato correttamente!');
+                const htmlContent = await extractHTMLContent(zip);
+                const processedHTML = await wrapWordsInSpans(htmlContent);
+                readerDiv.innerHTML = processedHTML;
                 hideSpinner();
+                alert('EPUB caricato correttamente!');
             } catch (error) {
                 console.error('Errore nel caricamento dell\'EPUB:', error);
                 alert('Errore nel caricamento dell\'EPUB. Controlla la console per maggiori dettagli.');
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Evento per iniziare la lettura
     startButton.addEventListener('click', () => {
-        if (currentWords.length === 0) {
+        if (!readerDiv.innerHTML.trim()) {
             alert('Per favore, carica un file EPUB prima.');
             return;
         }
@@ -69,14 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const speed = parseInt(speedInput.value) || 5; // parole al secondo
         const interval = 1000 / speed;
 
-        readerDiv.innerHTML = ''; // Pulisce l'area del lettore
-        currentWords.forEach(word => {
-            const span = document.createElement('span');
-            span.textContent = word + ' ';
-            readerDiv.appendChild(span);
-        });
-
-        const spans = readerDiv.querySelectorAll('span');
+        const spans = readerDiv.querySelectorAll('span.word');
+        wordIndex = 0;
 
         intervalId = setInterval(() => {
             if (wordIndex > 0) {
@@ -94,8 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, interval);
     }
 
-    // Funzione per estrarre il testo completo dall'EPUB
-    async function extractFullText(zip) {
+    // Funzione per estrarre il contenuto HTML dall'EPUB
+    async function extractHTMLContent(zip) {
         // Trova il percorso del file OPF (contenente il manifesto)
         const containerXML = await zip.file('META-INF/container.xml').async('string');
         const parser = new DOMParser();
@@ -110,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const itemRefs = contentDoc.querySelectorAll('spine itemref');
         const items = contentDoc.querySelectorAll('manifest item');
 
-        let fullText = '';
+        let fullHTML = '';
 
         for (let itemRef of itemRefs) {
             const idref = itemRef.getAttribute('idref');
@@ -120,13 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const href = item.getAttribute('href');
                 const filePath = resolvePath(rootfilePath, href);
                 const fileContent = await zip.file(filePath).async('string');
-                const fileDoc = parser.parseFromString(fileContent, 'text/html');
-                const bodyText = fileDoc.body.innerText;
-                fullText += bodyText + ' ';
+                fullHTML += fileContent + '<hr>'; // Separatore tra capitoli
             }
         }
 
-        return fullText;
+        return fullHTML;
     }
 
     // Funzione per risolvere il percorso del file
@@ -145,5 +137,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return baseParts.join('/');
     }
-});
 
+    // Funzione per avvolgere ogni parola in un span
+    async function wrapWordsInSpans(htmlContent) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+
+        // Funzione ricorsiva per attraversare tutti i nodi di testo
+        function traverse(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const words = node.textContent.split(/(\s+)/); // Mantiene gli spazi
+                const fragment = document.createDocumentFragment();
+
+                words.forEach(word => {
+                    if (/\s+/.test(word)) {
+                        fragment.appendChild(document.createTextNode(word));
+                    } else {
+                        const span = document.createElement('span');
+                        span.textContent = word;
+                        span.classList.add('word');
+                        fragment.appendChild(span);
+                    }
+                });
+
+                node.parentNode.replaceChild(fragment, node);
+            } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+                node.childNodes.forEach(child => traverse(child));
+            }
+        }
+
+        traverse(doc.body);
+
+        return doc.body.innerHTML;
+    }
+});
