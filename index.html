@@ -14,12 +14,21 @@
             height: 400px;
             overflow-y: scroll;
             margin-top: 20px;
+            position: relative;
         }
         #controls {
             margin-top: 20px;
         }
         .highlight {
             background-color: yellow;
+        }
+        /* Spinner per indicare il caricamento */
+        #spinner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
 </head>
@@ -36,9 +45,11 @@
         <button id="stop">Ferma Lettura</button>
     </div>
 
-    <div id="reader"></div>
+    <div id="reader">
+        <div id="spinner">Caricamento...</div>
+    </div>
 
-    <!-- Includi ePub.js tramite CDN -->
+    <!-- Includi ePub.js tramite CDN aggiornato -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.88/epub.min.js"></script>
     <script src="script.js"></script>
 </body>
