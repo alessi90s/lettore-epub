@@ -17,8 +17,13 @@
 
     <!-- Contenitore per le barre dei controlli in alto -->
     <div id="controls-container">
+        <!-- Pulsante per mostrare/nascondere i controlli su dispositivi mobili -->
+        <button id="toggle-controls" class="toggle-controls" title="Mostra/Nascondi Controlli">
+            <i class="fa fa-cogs"></i>
+        </button>
+
         <!-- Prima riga di controlli -->
-        <div id="controls-top">
+        <div id="controls-top" class="controls">
             <!-- Pulsante per selezionare il file EPUB -->
             <label for="epubFile" class="custom-file-upload">
                 <i class="fa fa-file-upload"></i> Seleziona EPUB
@@ -47,7 +52,7 @@
         </div>
 
         <!-- Seconda riga di controlli -->
-        <div id="controls-top-second-row">
+        <div id="controls-top-second-row" class="controls">
             <!-- Selettore del colore della sottolineatura -->
             <label for="highlightColor">Colore:</label>
             <select id="highlightColor">
@@ -80,7 +85,7 @@
         </div>
 
         <!-- Controlli di riproduzione (centrati e più grandi) -->
-        <div id="playback-controls">
+        <div id="playback-controls" class="controls">
             <button id="start" title="Avvia la lettura"><i class="fa fa-play"></i></button>
             <button id="pause" title="Metti in pausa la lettura"><i class="fa fa-pause"></i></button>
             <button id="stop" title="Ferma la lettura"><i class="fa fa-stop"></i></button>
