@@ -40,11 +40,11 @@ header h1 {
     top: 0;
     width: 100%;
     background-color: rgba(255, 255, 255, 0.9);
-    padding: 10px;
+    padding: 5px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
     z-index: 1000;
 }
 
@@ -56,14 +56,20 @@ body.sepia #controls-top {
     background-color: rgba(244, 236, 216, 0.9);
 }
 
-#controls-top label {
-    margin: 0 5px;
-    font-weight: bold;
+#controls-top > * {
+    margin: 2px 4px;
+}
+
+#controls-top button,
+#controls-top select,
+#controls-top label,
+#controls-top span {
+    font-size: 0.9em;
 }
 
 #controls-top button {
-    padding: 8px;
-    margin: 5px;
+    padding: 4px;
+    margin: 2px;
     font-size: 1em;
     cursor: pointer;
     border: none;
@@ -71,14 +77,18 @@ body.sepia #controls-top {
     color: inherit;
 }
 
+#controls-top button i {
+    font-size: 1em;
+}
+
 #controls-top button:hover {
     color: #007BFF;
 }
 
 #controls-top select {
-    padding: 6px;
-    margin: 0 5px;
-    font-size: 1em;
+    padding: 4px;
+    margin: 2px;
+    font-size: 0.9em;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
@@ -105,7 +115,7 @@ body.sepia #controls-top select {
 /* Pulsante di selezione file personalizzato */
 .custom-file-upload {
     display: inline-block;
-    padding: 8px;
+    padding: 4px;
     cursor: pointer;
     color: inherit;
 }
@@ -123,35 +133,37 @@ body.sepia #controls-top select {
     padding: 40px;
     margin: 20px auto;
     background-color: transparent;
-    line-height: 1.6;
     font-size: 18px;
     max-width: 800px;
     overflow-y: auto;
     position: relative;
+    /* Variabile CSS per l'altezza della linea */
+    --line-height: 28.8px; /* Valore iniziale, verrà aggiornato dinamicamente */
+    line-height: var(--line-height);
     /* Sfondo a righe del quaderno */
     background: repeating-linear-gradient(
         white,
-        white 24px,
-        #e6e6e6 24px,
-        #e6e6e6 25px
+        white calc(var(--line-height) - 1px),
+        #e6e6e6 calc(var(--line-height) - 1px),
+        #e6e6e6 var(--line-height)
     );
 }
 
 body.sepia #reader {
     background: repeating-linear-gradient(
         #f4ecd8,
-        #f4ecd8 24px,
-        #e0d7c6 24px,
-        #e0d7c6 25px
+        #f4ecd8 calc(var(--line-height) - 1px),
+        #e0d7c6 calc(var(--line-height) - 1px),
+        #e0d7c6 var(--line-height)
     );
 }
 
 body.night #reader {
     background: repeating-linear-gradient(
         #2e2e2e,
-        #2e2e2e 24px,
-        #424242 24px,
-        #424242 25px
+        #2e2e2e calc(var(--line-height) - 1px),
+        #424242 calc(var(--line-height) - 1px),
+        #424242 var(--line-height)
     );
 }
 
@@ -163,6 +175,7 @@ body.night #reader {
 }
 
 .word {
+    display: inline;
     margin: 0;
     padding: 0;
     cursor: pointer;
@@ -199,7 +212,7 @@ body.night #spinner {
     bottom: 0;
     width: 100%;
     background-color: rgba(255, 255, 255, 0.9);
-    padding: 10px;
+    padding: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -215,9 +228,9 @@ body.sepia #controls-bottom {
 }
 
 #controls-bottom select {
-    padding: 6px;
-    margin: 0 5px;
-    font-size: 1em;
+    padding: 4px;
+    margin: 2px;
+    font-size: 0.9em;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
