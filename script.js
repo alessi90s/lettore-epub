@@ -9,9 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const increaseSpeedButton = document.getElementById('increaseSpeed');
     const decreaseSpeedButton = document.getElementById('decreaseSpeed');
     const speedDisplay = document.getElementById('speedDisplay');
+    const increaseWordCountButton = document.getElementById('increaseWordCount');
+    const decreaseWordCountButton = document.getElementById('decreaseWordCount');
+    const wordCountDisplay = document.getElementById('wordCountDisplay');
     const spinner = document.getElementById('spinner');
-    const toggleNightModeBtn = document.getElementById('toggleNightMode');
     const tocSelect = document.getElementById('tocSelect');
+    const highlightColorSelect = document.getElementById('highlightColor');
+    const themeSelect = document.getElementById('themeSelect');
+    const increaseFontSizeButton = document.getElementById('increaseFontSize');
+    const decreaseFontSizeButton = document.getElementById('decreaseFontSize');
+    const fontSizeDisplay = document.getElementById('fontSizeDisplay');
+    const fontSelect = document.getElementById('fontSelect');
 
     let wordIndex = 0;
     let intervalId;
@@ -19,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPaused = false;
     let spans = []; // Array globale di span.word
     let tocItems = []; // Array per l'indice del libro
+    let wordCount = 3; // Numero di parole da evidenziare
+    let fontSize = 18; // Dimensione del testo
+    let highlightColor = '#fff9c4'; // Colore di default per l'evidenziazione
 
     // Funzione per mostrare lo spinner
     function showSpinner() {
@@ -35,7 +46,73 @@ document.addEventListener('DOMContentLoaded', () => {
         speedDisplay.textContent = speed;
     }
 
+    // Aggiorna la visualizzazione del numero di parole
+    function updateWordCountDisplay() {
+        wordCountDisplay.textContent = wordCount;
+    }
+
+    // Aggiorna la visualizzazione della dimensione del testo
+    function updateFontSizeDisplay() {
+        fontSizeDisplay.textContent = fontSize;
+    }
+
+    // Aggiorna la dimensione del testo nel reader
+    function updateFontSize() {
+        readerDiv.style.fontSize = `${fontSize}px`;
+    }
+
+    // Aggiorna il font nel reader
+    function updateFont() {
+        readerDiv.style.fontFamily = fontSelect.value;
+    }
+
+    // Aggiorna il colore dell'evidenziazione
+    function updateHighlightColor() {
+        const style = document.documentElement.style;
+        style.setProperty('--highlight-color', highlightColorSelect.value);
+    }
+
+    // Aggiorna il tema
+    function updateTheme() {
+        document.body.className = themeSelect.value;
+    }
+
+    // Inizializza le opzioni dei colori pastello
+    function initializeHighlightColors() {
+        const colors = [
+            { name: 'Giallo', value: '#fff9c4' },
+            { name: 'Arancione', value: '#ffcc80' },
+            { name: 'Rosa', value: '#f8bbd0' },
+            { name: 'Viola', value: '#e1bee7' },
+            { name: 'Blu', value: '#bbdefb' },
+            { name: 'Verde', value: '#c8e6c9' },
+            { name: 'Lime', value: '#f0f4c3' },
+            { name: 'Ambra', value: '#ffe082' },
+            { name: 'Marrone', value: '#d7ccc8' },
+            { name: 'Grigio', value: '#cfd8dc' },
+            { name: 'Ciano', value: '#b2ebf2' },
+            { name: 'Indaco', value: '#c5cae9' }
+        ];
+
+        colors.forEach(color => {
+            const option = document.createElement('option');
+            option.value = color.value;
+            option.textContent = color.name;
+            highlightColorSelect.appendChild(option);
+        });
+
+        // Imposta il colore di default
+        highlightColorSelect.value = highlightColor;
+    }
+
+    initializeHighlightColors();
     updateSpeedDisplay();
+    updateWordCountDisplay();
+    updateFontSizeDisplay();
+    updateFontSize();
+    updateFont();
+    updateHighlightColor();
+    updateTheme();
 
     // Event listener per aumentare la velocità
     increaseSpeedButton.addEventListener('click', () => {
@@ -51,6 +128,56 @@ document.addEventListener('DOMContentLoaded', () => {
             speed--;
             updateSpeedDisplay();
         }
+    });
+
+    // Event listener per aumentare il numero di parole
+    increaseWordCountButton.addEventListener('click', () => {
+        if (wordCount < 5) {
+            wordCount++;
+            updateWordCountDisplay();
+        }
+    });
+
+    // Event listener per diminuire il numero di parole
+    decreaseWordCountButton.addEventListener('click', () => {
+        if (wordCount > 1) {
+            wordCount--;
+            updateWordCountDisplay();
+        }
+    });
+
+    // Event listener per aumentare la dimensione del testo
+    increaseFontSizeButton.addEventListener('click', () => {
+        if (fontSize < 36) {
+            fontSize += 1;
+            updateFontSizeDisplay();
+            updateFontSize();
+        }
+    });
+
+    // Event listener per diminuire la dimensione del testo
+    decreaseFontSizeButton.addEventListener('click', () => {
+        if (fontSize > 12) {
+            fontSize -= 1;
+            updateFontSizeDisplay();
+            updateFontSize();
+        }
+    });
+
+    // Event listener per cambiare il font
+    fontSelect.addEventListener('change', () => {
+        updateFont();
+    });
+
+    // Event listener per cambiare il colore dell'evidenziazione
+    highlightColorSelect.addEventListener('change', () => {
+        highlightColor = highlightColorSelect.value;
+        updateHighlightColor();
+    });
+
+    // Event listener per cambiare il tema
+    themeSelect.addEventListener('change', () => {
+        updateTheme();
     });
 
     // Evento per il caricamento del file EPUB
@@ -117,11 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isPaused = false;
     });
 
-    // Evento per la modalità notte
-    toggleNightModeBtn.addEventListener('click', () => {
-        document.body.classList.toggle('night-mode');
-    });
-
     // Evento per la selezione di un capitolo dal menu a tendina
     tocSelect.addEventListener('change', () => {
         const selectedWordIndex = parseInt(tocSelect.value);
@@ -153,15 +275,15 @@ document.addEventListener('DOMContentLoaded', () => {
             spans.forEach(span => span.classList.remove('highlight'));
 
             if (wordIndex < spans.length) {
-                // Evidenzia le prossime 4 parole
-                for (let i = 0; i < 4; i++) {
+                // Evidenzia le prossime N parole
+                for (let i = 0; i < wordCount; i++) {
                     if (spans[wordIndex + i]) {
                         spans[wordIndex + i].classList.add('highlight');
                     }
                 }
                 // Scrolla verso la prima parola evidenziata
                 spans[wordIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                wordIndex += 4; // Incrementa l'indice di 4 parole
+                wordIndex += wordCount; // Incrementa l'indice di N parole
             } else {
                 clearInterval(intervalId);
                 alert('Lettura completata!');
@@ -249,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Funzione per popolare il menu a tendina dell'indice
     function populateTOC(tocItems) {
-        tocSelect.innerHTML = '<option value="">Seleziona un capitolo</option>';
+        tocSelect.innerHTML = '<option value="">Indice</option>';
         tocItems.forEach((tocItem) => {
             const option = document.createElement('option');
             option.value = tocItem.wordIndex;
@@ -345,4 +467,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearHighlights() {
         spans.forEach(span => span.classList.remove('highlight'));
     }
+
+    // Imposta il colore dell'evidenziazione tramite CSS Custom Property
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .word.highlight {
+            background-color: var(--highlight-color) !important;
+        }
+    `;
+    document.head.appendChild(style);
 });
