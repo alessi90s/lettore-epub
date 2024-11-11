@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Riferimenti agli elementi del DOM
     const fileInput = document.getElementById('epubFile');
     const readerDiv = document.getElementById('reader');
+    const readerContent = document.getElementById('reader-content');
 
     // Controlli di riproduzione
     const startButton = document.getElementById('start');
@@ -111,18 +112,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Aggiorna la dimensione del testo
     function updateFontSize() {
         fontSize = parseInt(fontSizeSelect.value);
-        readerDiv.style.fontSize = `${fontSize}px`;
+        readerContent.style.fontSize = `${fontSize}px`;
         // Calcola l'altezza della linea basata sulla dimensione del testo
         const lineHeightRatio = 1.6; // Rapporto tra altezza della linea e dimensione del testo
         const lineHeightPx = fontSize * lineHeightRatio;
-        readerDiv.style.lineHeight = `${lineHeightPx}px`;
+        readerContent.style.lineHeight = `${lineHeightPx}px`;
         // Aggiorna la variabile CSS per l'altezza della linea
         readerDiv.style.setProperty('--line-height', `${lineHeightPx}px`);
     }
 
     // Aggiorna il font
     function updateFont() {
-        readerDiv.style.fontFamily = fontSelect.value;
+        readerContent.style.fontFamily = fontSelect.value;
     }
 
     // Mostra lo spinner di caricamento
@@ -176,23 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listener per spostare il testo verso l'alto
     moveTextUpButton.addEventListener('click', () => {
-        verticalOffset -= 1; // Modifica l'offset a piacere
-        readerDiv.style.transform = `translateY(${verticalOffset}px)`;
-        // Imposta il background fisso per allineamento
-        readerDiv.classList.add('background-fixed');
+        verticalOffset -= 5; // Modifica l'offset a piacere (5px per click)
+        readerContent.style.transform = `translateY(${verticalOffset}px)`;
     });
 
     // Event listener per spostare il testo verso il basso
     moveTextDownButton.addEventListener('click', () => {
-        verticalOffset += 1; // Modifica l'offset a piacere
-        readerDiv.style.transform = `translateY(${verticalOffset}px)`;
-        // Imposta il background fisso per allineamento
-        readerDiv.classList.add('background-fixed');
-    });
-
-    // Rimuovi la classe 'background-fixed' quando l'utente scorre normalmente
-    readerDiv.addEventListener('wheel', () => {
-        readerDiv.classList.remove('background-fixed');
+        verticalOffset += 5; // Modifica l'offset a piacere (5px per click)
+        readerContent.style.transform = `translateY(${verticalOffset}px)`;
     });
 
     // Event listener per cambiare la dimensione del testo
@@ -225,10 +217,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const arrayBuffer = await file.arrayBuffer();
                 const zip = await JSZip.loadAsync(arrayBuffer);
                 const { content, toc } = await extractContent(zip);
-                readerDiv.innerHTML = content;
+                readerContent.innerHTML = content;
 
                 // Aggiorna l'array globale di spans
-                spans = readerDiv.querySelectorAll('span.word');
+                spans = readerContent.querySelectorAll('span.word');
 
                 // Aggiungi event listener per permettere di iniziare la lettura da un punto specifico
                 spans.forEach((span, index) => {
