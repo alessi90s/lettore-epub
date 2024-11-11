@@ -172,3 +172,17 @@ body.night-mode #tocSelect {
     color: #f5f5f5;
     border: 1px solid #888;
 }
+
+/* style.css */
+
+/* ... altri stili ... */
+
+.word.highlight {
+    background-color: #fff9c4 !important; /* Giallo pastello */
+}
+
+body.night-mode .word.highlight {
+    background-color: #fff59d !important; /* Giallo pastello leggermente più scuro per la modalità notte */
+}
+
+/* ... altri stili ... */
