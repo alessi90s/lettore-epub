@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const decreaseFontSizeButton = document.getElementById('decreaseFontSize');
     const fontSizeDisplay = document.getElementById('fontSizeDisplay');
     const fontSelect = document.getElementById('fontSelect');
+    const wordCountSelect = document.getElementById('wordCountSelect');
+    const fontSizeSelect = document.getElementById('fontSizeSelect');
+    const moveTextUpButton = document.getElementById('moveTextUp');
+    const moveTextDownButton = document.getElementById('moveTextDown');
 
     let wordIndex = 0;
     let intervalId;
@@ -30,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let wordCount = 3; // Numero di parole da evidenziare
     let fontSize = 18; // Dimensione del testo
     let highlightColor = '#fff9c4'; // Colore di default per l'evidenziazione
+    let verticalOffset = 0; // Offset verticale per l'allineamento del testo
+
 
     // Funzione per mostrare lo spinner
     function showSpinner() {
@@ -476,4 +482,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     `;
     document.head.appendChild(style);
+
+        // Inizializza le opzioni della dimensione del testo
+
+    function initializeFontSizeOptions() {
+        for (let i = 8; i <= 32; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            if (i === fontSize) {
+                option.selected = true;
+            }
+            fontSizeSelect.appendChild(option);
+        }
+    }
+
+    initializeFontSizeOptions();
+
+    // Aggiorna la dimensione del testo nel reader
+    function updateFontSize() {
+        fontSize = parseInt(fontSizeSelect.value);
+        fontSizeDisplay.textContent = fontSize;
+        readerDiv.style.fontSize = `${fontSize}px`;
+        // Calcola l'altezza della linea basata sulla dimensione del testo
+        const lineHeightRatio = 1.6; // Rapporto tra altezza della linea e dimensione del testo
+        const lineHeightPx = fontSize * lineHeightRatio;
+        readerDiv.style.lineHeight = `${lineHeightPx}px`;
+        // Aggiorna la variabile CSS per l'altezza della linea
+        readerDiv.style.setProperty('--line-height', `${lineHeightPx}px`);
+    }
+
+    // Event listener per cambiare il numero di parole
+    wordCountSelect.addEventListener('change', () => {
+        wordCount = parseInt(wordCountSelect.value);
+    });
+
+    // Event listener per spostare il testo verso l'alto
+    moveTextUpButton.addEventListener('click', () => {
+        verticalOffset -= 1; // Modifica l'offset a piacere
+        readerDiv.style.transform = `translateY(${verticalOffset}px)`;
+    });
+
+    // Event listener per spostare il testo verso il basso
+    moveTextDownButton.addEventListener('click', () => {
+        verticalOffset += 1; // Modifica l'offset a piacere
+        readerDiv.style.transform = `translateY(${verticalOffset}px)`;
+    });
+
+    // Event listener per cambiare la dimensione del testo
+    fontSizeSelect.addEventListener('change', () => {
+        updateFontSize();
+    });
+    
 });
