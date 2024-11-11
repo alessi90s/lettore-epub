@@ -7,7 +7,7 @@
     <!-- Includi una libreria di icone (ad esempio Font Awesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="classic"> <!-- Imposta il tema di default -->
+<body class="classic">
 
     <header>
         <h1><em>Lettore EPUB</em></h1>
@@ -21,23 +21,36 @@
         </label>
         <input type="file" id="epubFile" accept=".epub" />
 
-        <!-- Controlli per la lettura -->
-        <button id="start"><i class="fa fa-play"></i></button>
-        <button id="pause"><i class="fa fa-pause"></i></button>
-        <button id="stop"><i class="fa fa-stop"></i></button>
+        <!-- Frecce per regolare la posizione del testo -->
+        <button id="moveTextUp"><i class="fa fa-arrow-up"></i></button>
+        <button id="moveTextDown"><i class="fa fa-arrow-down"></i></button>
 
         <!-- Controlli per la velocità -->
-        <label for="speed">Velocità:</label>
+        <label for="speed">Velocità WPM:</label>
         <button id="decreaseSpeed"><i class="fa fa-minus"></i></button>
-        <span id="speedDisplay">5</span> wpm
+        <span id="speedDisplay">5</span>
         <button id="increaseSpeed"><i class="fa fa-plus"></i></button>
 
         <!-- Controlli per il numero di parole evidenziate -->
         <label for="wordCount">Parole:</label>
-        <button id="decreaseWordCount"><i class="fa fa-minus"></i></button>
-        <span id="wordCountDisplay">3</span>
-        <button id="increaseWordCount"><i class="fa fa-plus"></i></button>
+        <select id="wordCountSelect">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select>
 
+        <!-- Controlli per la lettura (centrati e più grandi) -->
+        <div id="playback-controls">
+            <button id="start"><i class="fa fa-play"></i></button>
+            <button id="pause"><i class="fa fa-pause"></i></button>
+            <button id="stop"><i class="fa fa-stop"></i></button>
+        </div>
+    </div>
+
+    <!-- Seconda riga di controlli -->
+    <div id="controls-top-second-row">
         <!-- Selettore del colore della sottolineatura -->
         <label for="highlightColor">Colore:</label>
         <select id="highlightColor">
@@ -52,18 +65,20 @@
             <option value="night">Notte</option>
         </select>
 
-        <!-- Controlli per la dimensione del testo e il font -->
-        <label for="fontSize">Dimensione Testo:</label>
-        <button id="decreaseFontSize"><i class="fa fa-minus"></i></button>
-        <span id="fontSizeDisplay">18</span> px
-        <button id="increaseFontSize"><i class="fa fa-plus"></i></button>
+        <!-- Selettore della dimensione del testo -->
+        <label for="fontSizeSelect">Dimensione Testo:</label>
+        <select id="fontSizeSelect">
+            <!-- Opzioni da 8 a 32 -->
+        </select>
 
+        <!-- Selettore del font -->
         <label for="fontSelect">Font:</label>
         <select id="fontSelect">
             <option value="'Georgia', serif">Georgia</option>
             <option value="'Times New Roman', serif">Times New Roman</option>
             <option value="'Arial', sans-serif">Arial</option>
             <option value="'Verdana', sans-serif">Verdana</option>
+            <!-- Aggiungi altri font se lo desideri -->
         </select>
     </div>
 
