@@ -1,7 +1,22 @@
+// script.js
+
 document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('epubFile');
     const readerDiv = document.getElementById('reader');
+    const startButton = document.getElementById('start');
+    const pauseButton = document.getElementById('pause');
+    const stopButton = document.getElementById('stop');
+    const increaseSpeedButton = document.getElementById('increaseSpeed');
+    const decreaseSpeedButton = document.getElementById('decreaseSpeed');
+    const speedDisplay = document.getElementById('speedDisplay');
     const spinner = document.getElementById('spinner');
+    const toggleNightModeBtn = document.getElementById('toggleNightMode');
+
+    let wordIndex = 0;
+    let intervalId;
+    let speed = 5; // parole al secondo
+    let isPaused = false;
+    let spans = []; // Array globale di span.word
 
     // Funzione per mostrare lo spinner
     function showSpinner() {
@@ -13,6 +28,29 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.style.display = 'none';
     }
 
+    // Aggiorna la visualizzazione della velocità
+    function updateSpeedDisplay() {
+        speedDisplay.textContent = speed;
+    }
+
+    updateSpeedDisplay();
+
+    // Event listener per aumentare la velocità
+    increaseSpeedButton.addEventListener('click', () => {
+        if (speed < 20) {
+            speed++;
+            updateSpeedDisplay();
+        }
+    });
+
+    // Event listener per diminuire la velocità
+    decreaseSpeedButton.addEventListener('click', () => {
+        if (speed > 1) {
+            speed--;
+            updateSpeedDisplay();
+        }
+    });
+
     // Evento per il caricamento del file EPUB
     fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -23,6 +61,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const zip = await JSZip.loadAsync(arrayBuffer);
                 const content = await extractContent(zip);
                 readerDiv.innerHTML = content;
+
+                // Aggiorna l'array globale di spans
+                spans = readerDiv.querySelectorAll('span.word');
+
+                // Aggiungi event listener per permettere di iniziare la lettura da un punto specifico
+                spans.forEach((span, index) => {
+                    span.addEventListener('click', () => {
+                        wordIndex = index;
+                        clearHighlights();
+                        span.classList.add('highlight');
+                        // Scrolla verso la parola selezionata
+                        span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                });
+
                 hideSpinner();
             } catch (error) {
                 console.error('Errore nel caricamento dell\'EPUB:', error);
@@ -33,6 +86,64 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Per favore, carica un file EPUB valido.');
         }
     });
+
+    // Evento per iniziare la lettura
+    startButton.addEventListener('click', () => {
+        if (spans.length === 0) {
+            alert('Per favore, carica un file EPUB prima.');
+            return;
+        }
+
+        isPaused = false;
+        startHighlighting(wordIndex);
+    });
+
+    // Evento per mettere in pausa la lettura
+    pauseButton.addEventListener('click', () => {
+        isPaused = true;
+        clearInterval(intervalId);
+    });
+
+    // Evento per fermare la lettura
+    stopButton.addEventListener('click', () => {
+        clearInterval(intervalId);
+        clearHighlights();
+        wordIndex = 0;
+        isPaused = false;
+    });
+
+    // Evento per la modalità notte
+    toggleNightModeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('night-mode');
+    });
+
+    // Funzione per iniziare la sottolineatura delle parole
+    function startHighlighting(startIndex) {
+        const interval = 1000 / speed;
+
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+
+        intervalId = setInterval(() => {
+            if (isPaused) {
+                clearInterval(intervalId);
+                return;
+            }
+            if (wordIndex > startIndex) {
+                spans[wordIndex - 1].classList.remove('highlight');
+            }
+            if (wordIndex < spans.length) {
+                spans[wordIndex].classList.add('highlight');
+                // Scrolla verso la parola evidenziata
+                spans[wordIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                wordIndex++;
+            } else {
+                clearInterval(intervalId);
+                alert('Lettura completata!');
+            }
+        }, interval);
+    }
 
     // Funzione per estrarre il contenuto dall'EPUB
     async function extractContent(zip) {
@@ -62,53 +173,4 @@ document.addEventListener('DOMContentLoaded', () => {
                 const filePath = resolvePath(rootfilePath, href);
 
                 if (mediaType.includes('application/xhtml+xml') || mediaType.includes('text/html')) {
-                    const fileContent = await zip.file(filePath).async('string');
-                    const fileDoc = parser.parseFromString(fileContent, 'application/xhtml+xml');
-
-                    // Gestisci le immagini
-                    await handleImages(zip, fileDoc, filePath);
-
-                    fullText += fileDoc.body.innerHTML;
-                }
-            }
-        }
-
-        return fullText;
-    }
-
-    // Funzione per gestire le immagini all'interno dei capitoli
-    async function handleImages(zip, doc, basePath) {
-        const images = doc.querySelectorAll('img');
-        for (let img of images) {
-            const src = img.getAttribute('src');
-            if (src) {
-                const imagePath = resolvePath(basePath, src);
-                const imageFile = zip.file(imagePath);
-                if (imageFile) {
-                    const blob = await imageFile.async('blob');
-                    const url = URL.createObjectURL(blob);
-                    img.setAttribute('src', url);
-                } else {
-                    console.warn('Immagine non trovata:', imagePath);
-                }
-            }
-        }
-    }
-
-    // Funzione per risolvere il percorso del file
-    function resolvePath(basePath, relativePath) {
-        const baseParts = basePath.split('/');
-        baseParts.pop(); // Rimuove il nome del file
-        const relativeParts = relativePath.split('/');
-
-        for (let part of relativeParts) {
-            if (part === '..') {
-                baseParts.pop();
-            } else if (part !== '.') {
-                baseParts.push(part);
-            }
-        }
-
-        return baseParts.join('/');
-    }
-});
+                    const fileContent = await
