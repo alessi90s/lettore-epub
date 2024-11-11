@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const spinner = document.getElementById('spinner');
     const tocList = document.getElementById('tocList');
     const toggleNightModeBtn = document.getElementById('toggleNightMode');
-    const containerDiv = document.getElementById('container');
 
     let wordIndex = 0;
     let intervalId;
@@ -63,12 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mappa i capitoli agli indici delle parole
                 mapChaptersToWordIndices();
 
-                // Nascondi gli elementi per creare un'esperienza immersiva
-                containerDiv.classList.add('hidden');
-                readerDiv.style.display = 'block';
-
                 hideSpinner();
-                // alert('EPUB caricato correttamente!');
+                alert('EPUB caricato correttamente!');
             } catch (error) {
                 console.error('Errore nel caricamento dell\'EPUB:', error);
                 alert('Errore nel caricamento dell\'EPUB. Controlla la console per maggiori dettagli.');
