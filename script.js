@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let wordIndex = 0;
     let intervalId;
     let chapters = []; // Array di {title, wordIndex}
+    let spans = []; // Array globale di span.word
 
     // Funzione per mostrare lo spinner
     function showSpinner() {
@@ -43,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyCSS(cssContent);
                 readerDiv.innerHTML = processedHTML;
 
+                // Aggiorna l'array globale di spans
+                spans = readerDiv.querySelectorAll('span.word');
+
                 // Costruisci il TOC
                 buildTOC();
 
@@ -63,21 +67,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Evento per iniziare la lettura
     startButton.addEventListener('click', () => {
-        const spans = readerDiv.querySelectorAll('span.word');
         if (spans.length === 0) {
             alert('Per favore, carica un file EPUB prima.');
             return;
         }
 
-        startHighlighting();
+        startHighlighting(wordIndex); // Inizia dalla posizione corrente
     });
 
     // Evento per fermare la lettura
     stopButton.addEventListener('click', () => {
         clearInterval(intervalId);
         // Rimuove tutte le sottolineature
-        const spans = readerDiv.querySelectorAll('span.word.highlight');
-        spans.forEach(span => span.classList.remove('highlight'));
+        clearHighlights();
         wordIndex = 0;
     });
 
@@ -97,16 +99,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Funzione per iniziare la sottolineatura delle parole
-    function startHighlighting() {
+    function startHighlighting(startIndex) {
         const speed = parseInt(speedInput.value) || 5; // parole al secondo
         const interval = 1000 / speed;
 
-        const spans = readerDiv.querySelectorAll('span.word');
-        wordIndex = 0;
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
 
         // Inizia a evidenziare le parole
         intervalId = setInterval(() => {
-            if (wordIndex > 0) {
+            if (wordIndex > startIndex) {
                 spans[wordIndex - 1].classList.remove('highlight');
             }
             if (wordIndex < spans.length) {
@@ -149,12 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const mediaType = item.getAttribute('media-type');
                 const filePath = resolvePath(rootfilePath, href);
 
-                if (mediaType === 'application/xhtml+xml' || mediaType === 'application/xhtml') {
+                if (mediaType === 'application/xhtml+xml' || mediaType === 'application/xhtml' || mediaType === 'text/html') {
                     const fileContent = await zip.file(filePath).async('string');
                     const fileDoc = parser.parseFromString(fileContent, 'text/html');
 
                     // Gestisci le immagini
-                    await handleImages(zip, fileDoc, rootfilePath);
+                    await handleImages(zip, fileDoc, filePath);
 
                     // Estrai il titolo del capitolo
                     let title = '';
@@ -216,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (node.nodeType === Node.TEXT_NODE) {
                 const parentTag = node.parentNode.tagName.toLowerCase();
                 // Evita di avvolgere parole all'interno di tag che non dovrebbero essere modificati
-                const nonProcessTags = ['script', 'style', 'a', 'code', 'pre'];
+                const nonProcessTags = ['script', 'style', 'a', 'code', 'pre', 'img', 'svg'];
                 if (nonProcessTags.includes(parentTag)) {
                     return;
                 }
@@ -238,13 +241,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 node.parentNode.replaceChild(fragment, node);
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 // Evita di attraversare i nodi che non devono essere modificati
-                const nonProcessTags = ['script', 'style', 'a', 'code', 'pre'];
+                const nonProcessTags = ['script', 'style', 'a', 'code', 'pre', 'img', 'svg'];
                 const tagName = node.tagName.toLowerCase();
                 if (nonProcessTags.includes(tagName)) {
                     return;
                 }
 
-                node.childNodes.forEach(child => traverse(child));
+                Array.from(node.childNodes).forEach(child => traverse(child));
             }
         }
 
@@ -284,19 +287,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Funzione per mappare i capitoli agli indici delle parole
     function mapChaptersToWordIndices() {
-        const spans = readerDiv.querySelectorAll('span.word');
         let cumulativeWordIndex = 0;
 
         chapters.forEach((chapter, index) => {
             // Crea un elemento temporaneo per trovare il primo span del capitolo
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = chapter.htmlContent;
-            const firstWordSpan = tempDiv.querySelector('span.word');
+            const tempSpans = tempDiv.querySelectorAll('span.word');
 
-            if (firstWordSpan) {
+            if (tempSpans.length > 0) {
+                const firstWord = tempSpans[0].textContent;
+
                 // Cerca nel readerDiv il primo span che corrisponde al primo span del capitolo
                 for (let i = cumulativeWordIndex; i < spans.length; i++) {
-                    if (spans[i].textContent === firstWordSpan.textContent) {
+                    if (spans[i].textContent === firstWord) {
                         chapters[index].wordIndex = i;
                         cumulativeWordIndex = i;
                         break;
@@ -313,7 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const chapter = chapters[chapterIndex];
         if (chapter.wordIndex !== undefined) {
             wordIndex = chapter.wordIndex;
-            const spans = readerDiv.querySelectorAll('span.word');
             const span = spans[wordIndex];
             if (span) {
                 // Rimuovi gli highlight precedenti
@@ -324,38 +327,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 span.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 // Inizia la sottolineatura da questo punto
                 clearInterval(intervalId);
-                startHighlightingFrom(wordIndex);
+                startHighlighting(wordIndex);
             }
         }
     }
 
-    // Funzione per iniziare la sottolineatura da un indice specifico
-    function startHighlightingFrom(startIndex) {
-        const speed = parseInt(speedInput.value) || 5; // parole al secondo
-        const interval = 1000 / speed;
-
-        const spans = readerDiv.querySelectorAll('span.word');
-        wordIndex = startIndex;
-
-        intervalId = setInterval(() => {
-            if (wordIndex > startIndex) {
-                spans[wordIndex - 1].classList.remove('highlight');
-            }
-            if (wordIndex < spans.length) {
-                spans[wordIndex].classList.add('highlight');
-                // Scrolla verso la parola evidenziata
-                spans[wordIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                wordIndex++;
-            } else {
-                clearInterval(intervalId);
-                alert('Lettura completata!');
-            }
-        }, interval);
-    }
-
     // Funzione per pulire tutti gli highlight
     function clearHighlights() {
-        const spans = readerDiv.querySelectorAll('span.word.highlight');
         spans.forEach(span => span.classList.remove('highlight'));
     }
 
@@ -376,17 +354,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Funzione per gestire le immagini all'interno dei capitoli
-    async function handleImages(zip, doc, rootfilePath) {
+    async function handleImages(zip, doc, basePath) {
         const images = doc.querySelectorAll('img');
         for (let img of images) {
             const src = img.getAttribute('src');
             if (src) {
-                const imagePath = resolvePath(rootfilePath, src);
+                const imagePath = resolvePath(basePath, src);
                 const imageFile = zip.file(imagePath);
                 if (imageFile) {
                     const blob = await imageFile.async('blob');
                     const url = URL.createObjectURL(blob);
                     img.setAttribute('src', url);
+                } else {
+                    console.warn('Immagine non trovata:', imagePath);
                 }
             }
         }
