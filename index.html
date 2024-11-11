@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>EPUB Reader Online1</title>
+    <title>EPUB Reader Online</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -10,12 +10,24 @@
     <h1>EPUB Reader Online</h1>
 
     <input type="file" id="epubFile" accept=".epub" />
-
+    
     <div id="controls">
         <label for="speed">Velocità (parole al secondo): </label>
         <input type="number" id="speed" value="5" min="1" max="20" />
         <button id="start">Inizia Lettura</button>
         <button id="stop">Ferma Lettura</button>
+    </div>
+    
+    <div id="toc">
+        <h2>Indice</h2>
+        <ul id="tocList">
+            <!-- I titoli dei capitoli verranno inseriti qui -->
+        </ul>
+    </div>
+    
+    <div id="pagination">
+        <button id="prevPage">Pagina Precedente</button>
+        <button id="nextPage">Pagina Successiva</button>
     </div>
 
     <div id="reader">
