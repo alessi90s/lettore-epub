@@ -88,8 +88,6 @@ body.night-mode #tocList button:hover {
 #reader {
     border: 1px solid #ccc;
     padding: 40px;
-    max-height: 80vh; /* Imposta un'altezza massima per il contenitore */
-    overflow-y: scroll;
     margin-top: 20px;
     background-color: #fff;
     position: relative;
@@ -99,6 +97,7 @@ body.night-mode #tocList button:hover {
     margin-left: auto;
     margin-right: auto;
     max-width: 800px;
+    overflow-y: auto; /* Permette lo scroll se il contenuto supera l'altezza del contenitore */
 
     /* Sfondo a righe che si muove con il testo */
     background: repeating-linear-gradient(
