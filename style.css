@@ -87,16 +87,7 @@ h1 {
     margin-left: auto;
     margin-right: auto;
 
-    /* Simulazione di una pagina */
-    width: 600px;
-    height: 800px;
-    margin: 0 auto;
-    padding: 40px;
-    box-sizing: border-box;
-    background: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    
-    /* Notebook lines */
+    /* Simulazione di una pagina a righe (quaderno) */
     background: repeating-linear-gradient(
         to bottom,
         #ffffff,
