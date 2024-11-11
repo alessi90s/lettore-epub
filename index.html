@@ -9,13 +9,18 @@
 
     <h1>EPUB Reader Online</h1>
 
-    <input type="file" id="epubFile" accept=".epub" />
-
     <div id="controls">
+        <input type="file" id="epubFile" accept=".epub" />
+
         <label for="speed">Velocità (parole al secondo): </label>
         <input type="number" id="speed" value="5" min="1" max="20" />
+
         <button id="start">Inizia Lettura</button>
         <button id="stop">Ferma Lettura</button>
+
+        <button id="prevPage">Pagina Precedente</button>
+        <button id="nextPage">Pagina Successiva</button>
+
         <button id="toggleNightMode">Modalità Notte</button>
     </div>
 
@@ -26,18 +31,12 @@
         </ul>
     </div>
 
-    <div id="pagination">
-        <button id="prevPage">Pagina Precedente</button>
-        <button id="nextPage">Pagina Successiva</button>
-    </div>
-
     <div id="reader">
         <div id="spinner">Caricamento...</div>
     </div>
 
     <!-- Includi JSZip tramite CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- Includi script.js -->
     <script src="script.js"></script>
 </body>
 </html>
