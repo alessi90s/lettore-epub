@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const tocList = document.getElementById('tocList');
     const prevPageBtn = document.getElementById('prevPage');
     const nextPageBtn = document.getElementById('nextPage');
+    const toggleNightModeBtn = document.getElementById('toggleNightMode');
 
-    let currentWords = [];
     let wordIndex = 0;
     let intervalId;
     let chapters = []; // Array di {title, wordIndex}
@@ -63,7 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Evento per iniziare la lettura
     startButton.addEventListener('click', () => {
-        if (currentWords.length === 0) {
+        const spans = readerDiv.querySelectorAll('span.word');
+        if (spans.length === 0) {
             alert('Per favore, carica un file EPUB prima.');
             return;
         }
@@ -75,9 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
     stopButton.addEventListener('click', () => {
         clearInterval(intervalId);
         // Rimuove tutte le sottolineature
-        const spans = readerDiv.querySelectorAll('span.word');
+        const spans = readerDiv.querySelectorAll('span.word.highlight');
         spans.forEach(span => span.classList.remove('highlight'));
         wordIndex = 0;
+    });
+
+    // Evento per la modalità notte
+    toggleNightModeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('night-mode');
+        readerDiv.classList.toggle('night-mode');
     });
 
     // Eventi per la navigazione delle pagine
@@ -97,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const spans = readerDiv.querySelectorAll('span.word');
         wordIndex = 0;
 
+        // Inizia a evidenziare le parole
         intervalId = setInterval(() => {
             if (wordIndex > 0) {
                 spans[wordIndex - 1].classList.remove('highlight');
