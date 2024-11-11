@@ -1,11 +1,18 @@
 /* style.css */
 
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'Georgia', serif;
     margin: 0;
     padding: 0;
     background-color: #f5f5f5;
     transition: background-color 0.3s, color 0.3s;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 body.night-mode {
@@ -13,14 +20,23 @@ body.night-mode {
     color: #f5f5f5;
 }
 
-h1 {
+header {
+    background-color: #fff;
+    padding: 20px;
     text-align: center;
-    color: #333;
-    padding: 20px 0;
-    margin: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-body.night-mode h1 {
+body.night-mode header {
+    background-color: #424242;
+}
+
+header h1 {
+    margin: 0;
+    color: #333;
+}
+
+body.night-mode header h1 {
     color: #f5f5f5;
 }
 
@@ -45,6 +61,20 @@ body.night-mode #controls {
     margin: 5px;
     font-size: 1em;
     cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#controls button:hover {
+    background-color: #f0f0f0;
+}
+
+body.night-mode #controls input,
+body.night-mode #controls button {
+    background-color: #616161;
+    color: #f5f5f5;
+    border: 1px solid #888;
 }
 
 #toc {
@@ -93,7 +123,8 @@ body.night-mode #tocList button:hover {
     color: #ff8a80;
 }
 
-#reader {
+main#reader {
+    flex: 1;
     padding: 40px;
     margin: 20px auto;
     background-color: #fff;
@@ -102,7 +133,6 @@ body.night-mode #tocList button:hover {
     font-size: 18px;
     max-width: 800px;
     overflow-y: auto;
-    height: calc(100vh - 200px); /* Regola l'altezza in base alla tua interfaccia */
     position: relative;
     background: repeating-linear-gradient(
         white,
@@ -112,7 +142,7 @@ body.night-mode #tocList button:hover {
     );
 }
 
-body.night-mode #reader {
+body.night-mode main#reader {
     background: repeating-linear-gradient(
         #333333,
         #333333 24px,
