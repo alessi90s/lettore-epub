@@ -1,186 +1,39 @@
-/* style.css */
-
-* {
-    box-sizing: border-box;
-}
-
 body {
-    font-family: 'Georgia', serif;
+    font-family: 'Arial', sans-serif;
     margin: 0;
-    padding: 0;
-    background-color: #f5f5f5;
-    transition: background-color 0.3s, color 0.3s;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
-body.night-mode {
-    background-color: #2e2e2e;
-    color: #f5f5f5;
-}
-
-header {
-    background-color: #fff;
     padding: 20px;
+    background-color: #f5f5f5;
+}
+
+h1 {
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-body.night-mode header {
-    background-color: #424242;
-}
-
-header h1 {
-    margin: 0;
     color: #333;
-}
-
-body.night-mode header h1 {
-    color: #f5f5f5;
 }
 
 #controls {
-    padding: 20px;
     text-align: center;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
 
-body.night-mode #controls {
-    background-color: #424242;
-}
-
-#controls label {
-    margin-right: 10px;
-    font-weight: bold;
-}
-
-#controls input, #controls button {
-    padding: 8px 12px;
-    margin: 5px;
-    font-size: 1em;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s, color 0.3s;
-}
-
-#controls button:hover {
-    background-color: #f0f0f0;
-}
-
-body.night-mode #controls input,
-body.night-mode #controls button {
-    background-color: #616161;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-#toc {
-    padding: 20px;
+#reader {
     max-width: 800px;
     margin: 0 auto;
-}
-
-#toc h2 {
-    text-align: center;
-    color: #333;
-}
-
-body.night-mode #toc h2 {
-    color: #f5f5f5;
-}
-
-#tocList {
-    list-style: none;
-    padding: 0;
-}
-
-#tocList li {
-    margin: 5px 0;
-}
-
-#tocList button {
-    background: none;
-    border: none;
-    color: #1a0dab;
-    cursor: pointer;
-    text-decoration: underline;
-    font-size: 1em;
-    transition: color 0.2s;
-}
-
-#tocList button:hover {
-    color: #c00;
-}
-
-body.night-mode #tocList button {
-    color: #8ab4f8;
-}
-
-body.night-mode #tocList button:hover {
-    color: #ff8a80;
-}
-
-main#reader {
-    flex: 1;
-    padding: 40px;
-    margin: 20px auto;
+    padding: 20px;
     background-color: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    overflow: auto;
     line-height: 1.6;
-    font-size: 18px;
-    max-width: 800px;
-    overflow-y: auto;
-    position: relative;
-    background: repeating-linear-gradient(
-        white,
-        white 24px,
-        #e6e6e6 24px,
-        #e6e6e6 25px
-    );
-}
-
-body.night-mode main#reader {
-    background: repeating-linear-gradient(
-        #333333,
-        #333333 24px,
-        #555555 24px,
-        #555555 25px
-    );
-}
-
-#reader img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 10px auto;
-}
-
-.word {
-    margin: 0;
-    padding: 0;
-}
-
-.word.highlight {
-    background-color: yellow;
-}
-
-body.night-mode .word.highlight {
-    background-color: #ffeb3b;
+    font-size: 16px;
+    color: #333;
 }
 
 #spinner {
     display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    text-align: center;
     font-size: 1.5em;
     color: #555;
 }
 
-body.night-mode #spinner {
-    color: #f5f5f5;
+img {
+    max-width: 100%;
+    height: auto;
 }
