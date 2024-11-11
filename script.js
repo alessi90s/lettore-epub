@@ -225,9 +225,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (file && file.name.endsWith('.epub')) {
             showSpinner();
             try {
+                console.log('Inizio caricamento EPUB:', file.name);
                 const arrayBuffer = await file.arrayBuffer();
                 const zip = await JSZip.loadAsync(arrayBuffer);
+                console.log('ZIP caricato con successo');
                 const { content, toc } = await extractContent(zip);
+                console.log('Contenuto estratto');
+
                 readerContent.innerHTML = content;
 
                 // Aggiorna l'array globale di spans
@@ -252,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 populateTOC(toc);
 
                 hideSpinner();
+                console.log('EPUB caricato e processato con successo');
             } catch (error) {
                 console.error('Errore nel caricamento dell\'EPUB:', error);
                 alert('Errore nel caricamento dell\'EPUB. Controlla la console per maggiori dettagli.');
@@ -311,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funzione per iniziare la sottolineatura delle parole
     function startHighlighting(startIndex) {
         const interval = (60000 * wordCount) / speed; // Calcola l'intervallo in millisecondi
+        console.log(`Inizio evidenziazione a indice ${startIndex} con intervallo ${interval}ms`);
 
         if (intervalId) {
             clearInterval(intervalId);
@@ -337,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 clearInterval(intervalId);
                 alert('Lettura completata!');
+                console.log('Lettura completata');
             }
         }, interval);
     }
@@ -354,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const parser = new DOMParser();
         const containerDoc = parser.parseFromString(containerXML, 'text/xml');
         const rootfilePath = containerDoc.querySelector('rootfile').getAttribute('full-path');
+        console.log('Percorso del rootfile:', rootfilePath);
 
         // Carica il file OPF
         const contentOPF = await zip.file(rootfilePath).async('string');
@@ -375,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const href = item.getAttribute('href');
                 const mediaType = item.getAttribute('media-type');
                 const filePath = resolvePath(rootfilePath, href);
+                console.log(`Processando file: ${filePath}, media-type: ${mediaType}`);
 
                 if (mediaType.includes('application/xhtml+xml') || mediaType.includes('text/html')) {
                     const fileContent = await zip.file(filePath).async('string');
@@ -385,6 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Avvolgi le parole in span e inserisci line breaks dopo i punti
                     const processedHTML = await wrapWordsInSpans(fileDoc.body.innerHTML);
+                    console.log(`Processato HTML per file: ${filePath}`);
 
                     // Mappa il capitolo all'indice delle parole
                     const wordCountBefore = cumulativeWordCount;
@@ -401,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 title: title,
                                 wordIndex: wordCountBefore
                             });
+                            console.log(`Aggiunto capitolo: ${title} a indice ${wordCountBefore}`);
                         });
                     }
 
@@ -434,6 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
             option.textContent = tocItem.title;
             tocSelect.appendChild(option);
         });
+        console.log('Indice popolato:', tocItems.length, 'voci');
     }
 
     // Funzione per gestire le immagini all'interno dei capitoli
@@ -445,9 +457,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const imagePath = resolvePath(basePath, src);
                 const imageFile = zip.file(imagePath);
                 if (imageFile) {
-                    const blob = await imageFile.async('blob');
-                    const url = URL.createObjectURL(blob);
-                    img.setAttribute('src', url);
+                    try {
+                        const blob = await imageFile.async('blob');
+                        const url = URL.createObjectURL(blob);
+                        img.setAttribute('src', url);
+                        console.log('Immagine caricata:', imagePath);
+                    } catch (error) {
+                        console.warn('Errore nel caricamento dell\'immagine:', imagePath, error);
+                    }
                 } else {
                     console.warn('Immagine non trovata:', imagePath);
                 }
