@@ -24,6 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.style.display = 'none';
     }
 
+    // Test di caricamento di ePub.js
+    if (typeof ePub === 'undefined') {
+        console.error('ePub.js non è stato caricato correttamente.');
+        alert('Errore: ePub.js non è stato caricato correttamente.');
+        return;
+    } else {
+        console.log('ePub.js caricato correttamente.');
+    }
+
     // Evento per il caricamento del file EPUB
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
