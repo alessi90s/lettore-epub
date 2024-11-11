@@ -13,23 +13,13 @@
         <h1><em>Lettore EPUB</em></h1>
     </header>
 
-    <div id="reader">
-        <div id="spinner">Caricamento...</div>
-    </div>
-
-    <!-- Barra dei controlli fissa in basso -->
-    <div id="controls">
+    <!-- Barra dei controlli in alto -->
+    <div id="controls-top">
         <!-- Pulsante per selezionare il file EPUB -->
         <label for="epubFile" class="custom-file-upload">
             <i class="fa fa-file-upload"></i> Seleziona EPUB
         </label>
         <input type="file" id="epubFile" accept=".epub" />
-
-        <!-- Menu a tendina per l'indice -->
-        <select id="tocSelect">
-            <option value="">Indice</option>
-            <!-- Le voci dell'indice verranno aggiunte qui -->
-        </select>
 
         <!-- Controlli per la lettura -->
         <button id="start"><i class="fa fa-play"></i></button>
@@ -51,7 +41,7 @@
         <!-- Selettore del colore della sottolineatura -->
         <label for="highlightColor">Colore:</label>
         <select id="highlightColor">
-            <!-- Aggiungeremo le opzioni dei colori nel file JavaScript -->
+            <!-- Le opzioni dei colori verranno aggiunte in script.js -->
         </select>
 
         <!-- Selettore del tema -->
@@ -75,6 +65,19 @@
             <option value="'Arial', sans-serif">Arial</option>
             <option value="'Verdana', sans-serif">Verdana</option>
             <!-- Aggiungi altri font se lo desideri -->
+        </select>
+    </div>
+
+    <div id="reader">
+        <div id="spinner">Caricamento...</div>
+    </div>
+
+    <!-- Barra dei controlli in basso per l'indice -->
+    <div id="controls-bottom">
+        <!-- Menu a tendina per l'indice -->
+        <select id="tocSelect">
+            <option value="">Indice</option>
+            <!-- Le voci dell'indice verranno aggiunte qui -->
         </select>
     </div>
 
