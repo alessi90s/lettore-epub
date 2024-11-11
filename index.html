@@ -2,13 +2,15 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>EPUB Reader Avanzato</title>
+    <title>Lettore EPUB</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Includi una libreria di icone (ad esempio Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
     <header>
-        <h1>EPUB Reader Avanzato</h1>
+        <h1><em>Lettore EPUB</em></h1>
     </header>
 
     <div id="reader">
@@ -17,23 +19,63 @@
 
     <!-- Barra dei controlli fissa in basso -->
     <div id="controls">
+        <!-- Pulsante per selezionare il file EPUB -->
+        <label for="epubFile" class="custom-file-upload">
+            <i class="fa fa-file-upload"></i> Seleziona EPUB
+        </label>
         <input type="file" id="epubFile" accept=".epub" />
 
-        <label for="tocSelect">Vai a:</label>
+        <!-- Menu a tendina per l'indice -->
         <select id="tocSelect">
-            <option value="">Seleziona un capitolo</option>
+            <option value="">Indice</option>
             <!-- Le voci dell'indice verranno aggiunte qui -->
         </select>
 
-        <label for="speed">Velocità:</label>
-        <button id="decreaseSpeed">-</button>
-        <span id="speedDisplay">5</span> parole al secondo
-        <button id="increaseSpeed">+</button>
+        <!-- Controlli per la lettura -->
+        <button id="start"><i class="fa fa-play"></i></button>
+        <button id="pause"><i class="fa fa-pause"></i></button>
+        <button id="stop"><i class="fa fa-stop"></i></button>
 
-        <button id="start">Inizia Lettura</button>
-        <button id="pause">Pausa Lettura</button>
-        <button id="stop">Ferma Lettura</button>
-        <button id="toggleNightMode">Modalità Notte</button>
+        <!-- Controlli per la velocità -->
+        <label for="speed">Velocità:</label>
+        <button id="decreaseSpeed"><i class="fa fa-minus"></i></button>
+        <span id="speedDisplay">5</span> wpm
+        <button id="increaseSpeed"><i class="fa fa-plus"></i></button>
+
+        <!-- Controlli per il numero di parole evidenziate -->
+        <label for="wordCount">Parole:</label>
+        <button id="decreaseWordCount"><i class="fa fa-minus"></i></button>
+        <span id="wordCountDisplay">3</span>
+        <button id="increaseWordCount"><i class="fa fa-plus"></i></button>
+
+        <!-- Selettore del colore della sottolineatura -->
+        <label for="highlightColor">Colore:</label>
+        <select id="highlightColor">
+            <!-- Aggiungeremo le opzioni dei colori nel file JavaScript -->
+        </select>
+
+        <!-- Selettore del tema -->
+        <label for="themeSelect">Tema:</label>
+        <select id="themeSelect">
+            <option value="classic">Classico</option>
+            <option value="sepia">Seppia</option>
+            <option value="night">Notte</option>
+        </select>
+
+        <!-- Controlli per la dimensione del testo e il font -->
+        <label for="fontSize">Dimensione Testo:</label>
+        <button id="decreaseFontSize"><i class="fa fa-minus"></i></button>
+        <span id="fontSizeDisplay">18</span> px
+        <button id="increaseFontSize"><i class="fa fa-plus"></i></button>
+
+        <label for="fontSelect">Font:</label>
+        <select id="fontSelect">
+            <option value="'Georgia', serif">Georgia</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="'Arial', sans-serif">Arial</option>
+            <option value="'Verdana', sans-serif">Verdana</option>
+            <!-- Aggiungi altri font se lo desideri -->
+        </select>
     </div>
 
     <!-- Includi JSZip tramite CDN -->
@@ -42,4 +84,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
