@@ -34,16 +34,125 @@ header h1 {
     font-family: 'Georgia', serif;
 }
 
+/* Barra dei controlli in alto */
+#controls-top {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    z-index: 1000;
+}
+
+body.night #controls-top {
+    background-color: rgba(46, 46, 46, 0.9);
+}
+
+body.sepia #controls-top {
+    background-color: rgba(244, 236, 216, 0.9);
+}
+
+#controls-top label {
+    margin: 0 5px;
+    font-weight: bold;
+}
+
+#controls-top button {
+    padding: 8px;
+    margin: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    color: inherit;
+}
+
+#controls-top button:hover {
+    color: #007BFF;
+}
+
+#controls-top select {
+    padding: 6px;
+    margin: 0 5px;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+body.night #controls-top select {
+    background-color: #4a4a4a;
+    color: #f5f5f5;
+    border: 1px solid #888;
+}
+
+body.sepia #controls-top select {
+    background-color: #e0d7c6;
+    color: #5b4636;
+    border: 1px solid #a58e6d;
+}
+
+#controls-top span {
+    margin: 0 5px;
+    min-width: 30px;
+    text-align: center;
+    display: inline-block;
+}
+
+/* Pulsante di selezione file personalizzato */
+.custom-file-upload {
+    display: inline-block;
+    padding: 8px;
+    cursor: pointer;
+    color: inherit;
+}
+
+.custom-file-upload:hover {
+    color: #007BFF;
+}
+
+#epubFile {
+    display: none;
+}
+
+/* Il reader */
 #reader {
     padding: 40px;
-    margin: 80px auto 80px auto;
+    margin: 20px auto;
     background-color: transparent;
     line-height: 1.6;
     font-size: 18px;
     max-width: 800px;
     overflow-y: auto;
     position: relative;
-    min-height: calc(100vh - 160px);
+    /* Sfondo a righe del quaderno */
+    background: repeating-linear-gradient(
+        white,
+        white 24px,
+        #e6e6e6 24px,
+        #e6e6e6 25px
+    );
+}
+
+body.sepia #reader {
+    background: repeating-linear-gradient(
+        #f4ecd8,
+        #f4ecd8 24px,
+        #e0d7c6 24px,
+        #e0d7c6 25px
+    );
+}
+
+body.night #reader {
+    background: repeating-linear-gradient(
+        #2e2e2e,
+        #2e2e2e 24px,
+        #424242 24px,
+        #424242 25px
+    );
 }
 
 #reader img {
@@ -84,9 +193,9 @@ body.night #spinner {
     color: #f5f5f5;
 }
 
-/* Barra dei controlli fissa in basso */
-#controls {
-    position: fixed;
+/* Barra dei controlli in basso per l'indice */
+#controls-bottom {
+    position: sticky;
     bottom: 0;
     width: 100%;
     background-color: rgba(255, 255, 255, 0.9);
@@ -94,38 +203,18 @@ body.night #spinner {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
     z-index: 1000;
 }
 
-body.night #controls {
+body.night #controls-bottom {
     background-color: rgba(46, 46, 46, 0.9);
 }
 
-body.sepia #controls {
+body.sepia #controls-bottom {
     background-color: rgba(244, 236, 216, 0.9);
 }
 
-#controls label {
-    margin: 0 5px;
-    font-weight: bold;
-}
-
-#controls button {
-    padding: 8px;
-    margin: 5px;
-    font-size: 1em;
-    cursor: pointer;
-    border: none;
-    background-color: transparent;
-    color: inherit;
-}
-
-#controls button:hover {
-    color: #007BFF;
-}
-
-#controls select {
+#controls-bottom select {
     padding: 6px;
     margin: 0 5px;
     font-size: 1em;
@@ -133,38 +222,14 @@ body.sepia #controls {
     border-radius: 4px;
 }
 
-body.night #controls select {
+body.night #controls-bottom select {
     background-color: #4a4a4a;
     color: #f5f5f5;
     border: 1px solid #888;
 }
 
-body.sepia #controls select {
+body.sepia #controls-bottom select {
     background-color: #e0d7c6;
     color: #5b4636;
     border: 1px solid #a58e6d;
 }
-
-#controls span {
-    margin: 0 5px;
-    min-width: 30px;
-    text-align: center;
-    display: inline-block;
-}
-
-/* Pulsante di selezione file personalizzato */
-.custom-file-upload {
-    display: inline-block;
-    padding: 8px;
-    cursor: pointer;
-    color: inherit;
-}
-
-.custom-file-upload:hover {
-    color: #007BFF;
-}
-
-#epubFile {
-    display: none;
-}
-
