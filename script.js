@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let speed = 5; // parole al secondo
     let isPaused = false;
     let spans = []; // Array globale di span.word
-    let chapterWordIndices = []; // Array per mappare i capitoli agli indici delle parole
+    let tocItems = []; // Array per l'indice del libro
 
     // Funzione per mostrare lo spinner
     function showSpinner() {
@@ -124,9 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Evento per la selezione di un capitolo dal menu a tendina
     tocSelect.addEventListener('change', () => {
-        const selectedIndex = tocSelect.selectedIndex - 1; // Il primo elemento è "Seleziona un capitolo"
-        if (selectedIndex >= 0 && chapterWordIndices[selectedIndex] !== undefined) {
-            wordIndex = chapterWordIndices[selectedIndex];
+        const selectedWordIndex = parseInt(tocSelect.value);
+        if (!isNaN(selectedWordIndex)) {
+            wordIndex = selectedWordIndex;
             clearHighlights();
             const span = spans[wordIndex];
             if (span) {
@@ -150,13 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             // Rimuove l'highlight delle parole precedenti
-            for (let i = wordIndex - 4; i < wordIndex; i++) {
-                if (i >= 0 && spans[i]) {
-                    spans[i].classList.remove('highlight');
-                }
-            }
+            spans.forEach(span => span.classList.remove('highlight'));
+
             if (wordIndex < spans.length) {
-                // Evidenzia le prossime 3-4 parole
+                // Evidenzia le prossime 4 parole
                 for (let i = 0; i < 4; i++) {
                     if (spans[wordIndex + i]) {
                         spans[wordIndex + i].classList.add('highlight');
@@ -188,25 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const spineItems = contentDoc.querySelectorAll('spine itemref');
         const manifestItems = contentDoc.querySelectorAll('manifest item');
 
-        // Estrae l'indice (TOC)
-        const tocItems = [];
-        const navItem = Array.from(manifestItems).find(item => item.getAttribute('properties') === 'nav');
-        if (navItem) {
-            const navHref = navItem.getAttribute('href');
-            const navFilePath = resolvePath(rootfilePath, navHref);
-            const navContent = await zip.file(navFilePath).async('string');
-            const navDoc = parser.parseFromString(navContent, 'application/xhtml+xml');
-            const navPoints = navDoc.querySelectorAll('nav[epub\\:type="toc"] li a');
-            navPoints.forEach((navPoint) => {
-                tocItems.push({
-                    title: navPoint.textContent.trim(),
-                    href: navPoint.getAttribute('href')
-                });
-            });
-        }
-
         let fullText = '';
         let cumulativeWordCount = 0;
+        tocItems = [];
 
         for (let itemRef of spineItems) {
             const idref = itemRef.getAttribute('idref');
@@ -234,10 +215,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tempSpans = tempDiv.querySelectorAll('span.word');
                     cumulativeWordCount += tempSpans.length;
 
-                    // Verifica se questo capitolo corrisponde a una voce dell'indice
-                    const tocItem = tocItems.find(toc => toc.href.split('#')[0] === href);
-                    if (tocItem) {
-                        chapterWordIndices.push(wordCountBefore);
+                    // Estrai i titoli dei capitoli
+                    const chapterTitles = extractChapterTitles(fileDoc);
+                    if (chapterTitles.length > 0) {
+                        chapterTitles.forEach(title => {
+                            tocItems.push({
+                                title: title,
+                                wordIndex: wordCountBefore
+                            });
+                        });
                     }
 
                     fullText += processedHTML;
@@ -248,12 +234,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return { content: fullText, toc: tocItems };
     }
 
+    // Funzione per estrarre i titoli dei capitoli
+    function extractChapterTitles(doc) {
+        const titles = [];
+        const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        headings.forEach(heading => {
+            const titleText = heading.textContent.trim();
+            if (titleText) {
+                titles.push(titleText);
+            }
+        });
+        return titles;
+    }
+
     // Funzione per popolare il menu a tendina dell'indice
     function populateTOC(tocItems) {
         tocSelect.innerHTML = '<option value="">Seleziona un capitolo</option>';
-        tocItems.forEach((tocItem, index) => {
+        tocItems.forEach((tocItem) => {
             const option = document.createElement('option');
-            option.value = index;
+            option.value = tocItem.wordIndex;
             option.textContent = tocItem.title;
             tocSelect.appendChild(option);
         });
