@@ -153,20 +153,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     const fileContent = await zip.file(filePath).async('string');
                     const fileDoc = parser.parseFromString(fileContent, 'text/html');
 
+                    // Gestisci le immagini
+                    await handleImages(zip, fileDoc, rootfilePath);
+
                     // Estrai il titolo del capitolo
                     let title = '';
                     const titleTag = fileDoc.querySelector('title');
                     if (titleTag) {
-                        title = titleTag.textContent;
+                        title = titleTag.textContent.trim();
                     } else {
                         const h1 = fileDoc.querySelector('h1');
-                        title = h1 ? h1.textContent : `Capitolo ${chapters.length + 1}`;
+                        title = h1 ? h1.textContent.trim() : `Capitolo ${chapters.length + 1}`;
                     }
 
-                    chapters.push({
-                        title: title,
-                        htmlContent: fileDoc.body.innerHTML
-                    });
+                    // Evita di aggiungere capitoli con titoli vuoti o duplicati
+                    if (title && !chapters.some(ch => ch.title === title)) {
+                        chapters.push({
+                            title: title,
+                            htmlContent: fileDoc.body.innerHTML
+                        });
+                    }
                 }
             }
         }
@@ -366,6 +372,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 top: -readerHeight,
                 behavior: 'smooth'
             });
+        }
+    }
+
+    // Funzione per gestire le immagini all'interno dei capitoli
+    async function handleImages(zip, doc, rootfilePath) {
+        const images = doc.querySelectorAll('img');
+        for (let img of images) {
+            const src = img.getAttribute('src');
+            if (src) {
+                const imagePath = resolvePath(rootfilePath, src);
+                const imageFile = zip.file(imagePath);
+                if (imageFile) {
+                    const blob = await imageFile.async('blob');
+                    const url = URL.createObjectURL(blob);
+                    img.setAttribute('src', url);
+                }
+            }
         }
     }
 });
