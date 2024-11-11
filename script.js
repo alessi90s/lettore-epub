@@ -47,6 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Aggiorna l'array globale di spans
                 spans = readerDiv.querySelectorAll('span.word');
 
+                // Aggiungi event listener per permettere di iniziare la lettura da un punto specifico
+                spans.forEach((span, index) => {
+                    span.addEventListener('click', () => {
+                        wordIndex = index;
+                        clearHighlights();
+                        span.classList.add('highlight');
+                    });
+                });
+
                 // Costruisci il TOC
                 buildTOC();
 
@@ -325,9 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 span.classList.add('highlight');
                 // Scrolla verso la parola evidenziata
                 span.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Inizia la sottolineatura da questo punto
-                clearInterval(intervalId);
-                startHighlighting(wordIndex);
             }
         }
     }
