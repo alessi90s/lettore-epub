@@ -2,8 +2,7 @@
 
 body {
     font-family: 'Georgia', serif;
-    margin: 0;
-    padding: 0;
+    margin: 20px;
     background-color: #f5f5f5;
     transition: background-color 0.3s, color 0.3s;
 }
@@ -13,18 +12,9 @@ body.night-mode {
     color: #f5f5f5;
 }
 
-#container {
-    padding: 20px;
-}
-
-#container.hidden {
-    display: none;
-}
-
 h1 {
     text-align: center;
     color: #333;
-    margin: 20px 0;
 }
 
 body.night-mode h1 {
@@ -32,8 +22,8 @@ body.night-mode h1 {
 }
 
 #controls {
+    margin-top: 20px;
     text-align: center;
-    margin-bottom: 20px;
 }
 
 #controls label {
@@ -49,8 +39,10 @@ body.night-mode h1 {
 }
 
 #toc {
+    margin-top: 20px;
     max-width: 800px;
-    margin: 0 auto;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #toc h2 {
@@ -94,15 +86,19 @@ body.night-mode #tocList button:hover {
 }
 
 #reader {
-    display: none; /* Nascondi il reader finché non viene caricato un file EPUB */
-    height: 100vh;
+    border: 1px solid #ccc;
+    padding: 40px;
+    max-height: 80vh; /* Imposta un'altezza massima per il contenitore */
     overflow-y: scroll;
+    margin-top: 20px;
     background-color: #fff;
     position: relative;
-    box-sizing: border-box;
-    padding: 40px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
     line-height: 1.5;
     font-size: 16px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 800px;
 
     /* Sfondo a righe che si muove con il testo */
     background: repeating-linear-gradient(
@@ -155,4 +151,3 @@ body.night-mode .word.highlight {
 body.night-mode #spinner {
     color: #f5f5f5;
 }
-
