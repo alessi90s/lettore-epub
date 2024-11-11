@@ -33,7 +33,7 @@ body.night-mode h1 {
 
 #controls input, #controls button {
     padding: 5px 10px;
-    margin-right: 5px;
+    margin: 5px;
     font-size: 1em;
     cursor: pointer;
 }
@@ -85,30 +85,18 @@ body.night-mode #tocList button:hover {
     color: #ff8a80;
 }
 
-#pagination {
-    margin-top: 20px;
-    text-align: center;
-}
-
-#pagination button {
-    padding: 5px 10px;
-    margin: 0 5px;
-    font-size: 1em;
-    cursor: pointer;
-}
-
 #reader {
     border: 1px solid #ccc;
-    padding: 20px; /* Ridotto il padding per migliorare l'allineamento */
-    height: 800px;
+    padding: 40px;
+    height: calc(297mm - 80px); /* Altezza di un foglio A4 in mm meno il padding */
+    width: calc(210mm - 80px); /* Larghezza di un foglio A4 in mm meno il padding */
     overflow-y: scroll;
     margin-top: 20px;
     background-color: #fff;
     position: relative;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    line-height: 1.5; /* Ridotto per sincronizzare meglio con le righe */
-    font-size: 16px; /* Imposta una dimensione fissa per il font */
-    max-width: 600px;
+    line-height: 1.5;
+    font-size: 16px;
     margin-left: auto;
     margin-right: auto;
 
@@ -133,8 +121,14 @@ body.night-mode #reader {
     );
 }
 
+#reader img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 10px auto;
+}
+
 .word {
-    /* Assicurarsi che le parole non abbiano margini o padding aggiuntivi */
     margin: 0;
     padding: 0;
 }
@@ -158,14 +152,4 @@ body.night-mode .highlight {
     color: #555;
 }
 
-body.night-mode #spinner {
-    color: #f5f5f5;
-}
-
-@media print {
-    #reader {
-        width: 100%;
-        height: auto;
-        box-shadow: none;
-    }
-}
+body.n
