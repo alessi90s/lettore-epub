@@ -13,33 +13,35 @@
         <h1><em>Lettore EPUB</em></h1>
     </header>
 
-    <!-- Barra dei controlli in alto -->
-    <div id="controls-top">
-        <!-- Pulsante per selezionare il file EPUB -->
-        <label for="epubFile" class="custom-file-upload">
-            <i class="fa fa-file-upload"></i> Seleziona EPUB
-        </label>
-        <input type="file" id="epubFile" accept=".epub" />
+    <!-- Contenitore per le barre dei controlli in alto -->
+    <div id="controls-container">
+        <div id="controls-top">
+            <!-- Pulsante per selezionare il file EPUB -->
+            <label for="epubFile" class="custom-file-upload">
+                <i class="fa fa-file-upload"></i> Seleziona EPUB
+            </label>
+            <input type="file" id="epubFile" accept=".epub" />
 
-        <!-- Frecce per regolare la posizione del testo -->
-        <button id="moveTextUp"><i class="fa fa-arrow-up"></i></button>
-        <button id="moveTextDown"><i class="fa fa-arrow-down"></i></button>
+            <!-- Frecce per regolare la posizione del testo -->
+            <button id="moveTextUp"><i class="fa fa-arrow-up"></i></button>
+            <button id="moveTextDown"><i class="fa fa-arrow-down"></i></button>
 
-        <!-- Controlli per la velocità -->
-        <label for="speed">Velocità WPM:</label>
-        <button id="decreaseSpeed"><i class="fa fa-minus"></i></button>
-        <span id="speedDisplay">5</span>
-        <button id="increaseSpeed"><i class="fa fa-plus"></i></button>
+            <!-- Controlli per la velocità -->
+            <label for="speed">Velocità WPM:</label>
+            <button id="decreaseSpeed"><i class="fa fa-minus"></i></button>
+            <span id="speedDisplay">200</span>
+            <button id="increaseSpeed"><i class="fa fa-plus"></i></button>
 
-        <!-- Controlli per il numero di parole evidenziate -->
-        <label for="wordCount">Parole:</label>
-        <select id="wordCountSelect">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3" selected>3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-        </select>
+            <!-- Controlli per il numero di parole evidenziate -->
+            <label for="wordCount">Parole:</label>
+            <select id="wordCountSelect">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        </div>
 
         <!-- Controlli per la lettura (centrati e più grandi) -->
         <div id="playback-controls">
@@ -47,39 +49,38 @@
             <button id="pause"><i class="fa fa-pause"></i></button>
             <button id="stop"><i class="fa fa-stop"></i></button>
         </div>
-    </div>
 
-    <!-- Seconda riga di controlli -->
-    <div id="controls-top-second-row">
-        <!-- Selettore del colore della sottolineatura -->
-        <label for="highlightColor">Colore:</label>
-        <select id="highlightColor">
-            <!-- Le opzioni dei colori verranno aggiunte in script.js -->
-        </select>
+        <!-- Seconda riga di controlli -->
+        <div id="controls-top-second-row">
+            <!-- Selettore del colore della sottolineatura -->
+            <label for="highlightColor">Colore:</label>
+            <select id="highlightColor">
+                <!-- Le opzioni dei colori verranno aggiunte in script.js -->
+            </select>
 
-        <!-- Selettore del tema -->
-        <label for="themeSelect">Tema:</label>
-        <select id="themeSelect">
-            <option value="classic">Classico</option>
-            <option value="sepia">Seppia</option>
-            <option value="night">Notte</option>
-        </select>
+            <!-- Selettore del tema -->
+            <label for="themeSelect">Tema:</label>
+            <select id="themeSelect">
+                <option value="classic">Classico</option>
+                <option value="sepia">Seppia</option>
+                <option value="night">Notte</option>
+            </select>
 
-        <!-- Selettore della dimensione del testo -->
-        <label for="fontSizeSelect">Dimensione Testo:</label>
-        <select id="fontSizeSelect">
-            <!-- Opzioni da 8 a 32 -->
-        </select>
+            <!-- Selettore della dimensione del testo -->
+            <label for="fontSizeSelect">Dimensione Testo:</label>
+            <select id="fontSizeSelect">
+                <!-- Opzioni da 8 a 32 -->
+            </select>
 
-        <!-- Selettore del font -->
-        <label for="fontSelect">Font:</label>
-        <select id="fontSelect">
-            <option value="'Georgia', serif">Georgia</option>
-            <option value="'Times New Roman', serif">Times New Roman</option>
-            <option value="'Arial', sans-serif">Arial</option>
-            <option value="'Verdana', sans-serif">Verdana</option>
-            <!-- Aggiungi altri font se lo desideri -->
-        </select>
+            <!-- Selettore del font -->
+            <label for="fontSelect">Font:</label>
+            <select id="fontSelect">
+                <option value="'Georgia', serif">Georgia</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Arial', sans-serif">Arial</option>
+                <option value="'Verdana', sans-serif">Verdana</option>
+            </select>
+        </div>
     </div>
 
     <div id="reader">
