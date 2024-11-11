@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedInput = document.getElementById('speed');
     const spinner = document.getElementById('spinner');
 
-    let book;
-    let rendition;
     let currentWords = [];
     let wordIndex = 0;
     let intervalId;
@@ -24,52 +22,24 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.style.display = 'none';
     }
 
-    // Test di caricamento di ePub.js
-    if (typeof ePub === 'undefined') {
-        console.error('ePub.js non è stato caricato correttamente.');
-        alert('Errore: ePub.js non è stato caricato correttamente.');
-        return;
-    } else {
-        console.log('ePub.js caricato correttamente.');
-    }
-
     // Evento per il caricamento del file EPUB
-    fileInput.addEventListener('change', (e) => {
+    fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file && file.name.endsWith('.epub')) {
-            // Pulisce eventuali letture precedenti
-            if (rendition) {
-                rendition.destroy();
-                readerDiv.innerHTML = '';
+            showSpinner();
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const zip = await JSZip.loadAsync(arrayBuffer);
+                const fullText = await extractFullText(zip);
+                currentWords = fullText.split(/\s+/).filter(word => word.length > 0);
+                wordIndex = 0;
+                alert('EPUB caricato correttamente!');
+                hideSpinner();
+            } catch (error) {
+                console.error('Errore nel caricamento dell\'EPUB:', error);
+                alert('Errore nel caricamento dell\'EPUB. Controlla la console per maggiori dettagli.');
+                hideSpinner();
             }
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const arrayBuffer = event.target.result;
-                try {
-                    book = ePub(arrayBuffer);
-                    rendition = book.renderTo("reader", {
-                        width: "100%",
-                        height: "100%",
-                    });
-
-                    rendition.display().then(() => {
-                        console.log('EPUB caricato correttamente.');
-                        alert('EPUB caricato correttamente!');
-                    }).catch(err => {
-                        console.error('Errore durante la visualizzazione:', err);
-                        alert('Errore durante la visualizzazione dell\'EPUB. Controlla la console per maggiori dettagli.');
-                    });
-                } catch (error) {
-                    console.error('Errore nell\'inizializzazione di ePub.js:', error);
-                    alert('Errore nell\'inizializzazione di ePub.js. Controlla la console per maggiori dettagli.');
-                }
-            };
-            reader.onerror = function(error) {
-                console.error('Errore nella lettura del file:', error);
-                alert('Errore nella lettura del file EPUB.');
-            };
-            reader.readAsArrayBuffer(file);
         } else {
             alert('Per favore, carica un file EPUB valido.');
         }
@@ -77,47 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Evento per iniziare la lettura
     startButton.addEventListener('click', () => {
-        if (!book) {
+        if (currentWords.length === 0) {
             alert('Per favore, carica un file EPUB prima.');
             return;
         }
 
-        showSpinner();
-
-        // Recupera tutto il testo
-        book.ready.then(() => {
-            const spineItems = book.spine.spineItems;
-            let fullText = '';
-            const promises = spineItems.map(item => {
-                return book.load(item).then(contents => {
-                    // Estrarre solo il testo visibile
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(contents.document.documentElement.innerHTML, 'text/html');
-                    return doc.body.innerText;
-                }).catch(err => {
-                    console.error(`Errore nel caricamento della sezione ${item.id}:`, err);
-                    return '';
-                });
-            });
-
-            Promise.all(promises).then(texts => {
-                fullText = texts.join(' ');
-                // Suddivide il testo in parole
-                currentWords = fullText.split(/\s+/).filter(word => word.length > 0);
-                wordIndex = 0;
-                // Inizia la sottolineatura
-                startHighlighting();
-                hideSpinner();
-            }).catch(err => {
-                console.error('Errore nel recupero del testo:', err);
-                alert('Errore nel recupero del testo dell\'EPUB. Controlla la console per maggiori dettagli.');
-                hideSpinner();
-            });
-        }).catch(err => {
-            console.error('Errore nel preparare il libro:', err);
-            alert('Errore nel preparare il libro. Controlla la console per maggiori dettagli.');
-            hideSpinner();
-        });
+        startHighlighting();
     });
 
     // Evento per fermare la lettura
@@ -157,5 +92,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Lettura completata!');
             }
         }, interval);
+    }
+
+    // Funzione per estrarre il testo completo dall'EPUB
+    async function extractFullText(zip) {
+        // Trova il percorso del file OPF (contenente il manifesto)
+        const containerXML = await zip.file('META-INF/container.xml').async('string');
+        const parser = new DOMParser();
+        const containerDoc = parser.parseFromString(containerXML, 'text/xml');
+        const rootfilePath = containerDoc.querySelector('rootfile').getAttribute('full-path');
+
+        // Carica il file OPF
+        const contentOPF = await zip.file(rootfilePath).async('string');
+        const contentDoc = parser.parseFromString(contentOPF, 'text/xml');
+
+        // Estrae i riferimenti ai file xhtml
+        const itemRefs = contentDoc.querySelectorAll('spine itemref');
+        const items = contentDoc.querySelectorAll('manifest item');
+
+        let fullText = '';
+
+        for (let itemRef of itemRefs) {
+            const idref = itemRef.getAttribute('idref');
+            const item = Array.from(items).find(i => i.getAttribute('id') === idref);
+
+            if (item) {
+                const href = item.getAttribute('href');
+                const filePath = resolvePath(rootfilePath, href);
+                const fileContent = await zip.file(filePath).async('string');
+                const fileDoc = parser.parseFromString(fileContent, 'text/html');
+                const bodyText = fileDoc.body.innerText;
+                fullText += bodyText + ' ';
+            }
+        }
+
+        return fullText;
+    }
+
+    // Funzione per risolvere il percorso del file
+    function resolvePath(basePath, relativePath) {
+        const baseParts = basePath.split('/');
+        baseParts.pop(); // Rimuove il nome del file
+        const relativeParts = relativePath.split('/');
+
+        for (let part of relativeParts) {
+            if (part === '..') {
+                baseParts.pop();
+            } else if (part !== '.') {
+                baseParts.push(part);
+            }
+        }
+
+        return baseParts.join('/');
     }
 });
