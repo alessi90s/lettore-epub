@@ -41,6 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Selettore dell'indice
     const tocSelect = document.getElementById('tocSelect');
 
+    // Pulsante per mostrare/nascondere i controlli su mobile
+    const toggleControlsButton = document.getElementById('toggle-controls');
+
+    // Contenitore dei controlli
+    const controlsContainer = document.getElementById('controls-container');
+
     // Variabili globali
     let wordIndex = 0;
     let intervalId;
@@ -206,6 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listener per cambiare il tema
     themeSelect.addEventListener('change', () => {
         updateTheme();
+    });
+
+    // Pulsante per mostrare/nascondere i controlli su mobile
+    toggleControlsButton.addEventListener('click', () => {
+        controlsContainer.classList.toggle('active');
     });
 
     // Evento per il caricamento del file EPUB
