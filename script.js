@@ -1,89 +1,58 @@
 // script.js
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Riferimenti agli elementi del DOM
     const fileInput = document.getElementById('epubFile');
     const readerDiv = document.getElementById('reader');
+
+    // Controlli di riproduzione
     const startButton = document.getElementById('start');
     const pauseButton = document.getElementById('pause');
     const stopButton = document.getElementById('stop');
+
+    // Controlli di velocità
     const increaseSpeedButton = document.getElementById('increaseSpeed');
     const decreaseSpeedButton = document.getElementById('decreaseSpeed');
     const speedDisplay = document.getElementById('speedDisplay');
-    const increaseWordCountButton = document.getElementById('increaseWordCount');
-    const decreaseWordCountButton = document.getElementById('decreaseWordCount');
-    const wordCountDisplay = document.getElementById('wordCountDisplay');
-    const spinner = document.getElementById('spinner');
-    const tocSelect = document.getElementById('tocSelect');
-    const highlightColorSelect = document.getElementById('highlightColor');
-    const themeSelect = document.getElementById('themeSelect');
-    const increaseFontSizeButton = document.getElementById('increaseFontSize');
-    const decreaseFontSizeButton = document.getElementById('decreaseFontSize');
-    const fontSizeDisplay = document.getElementById('fontSizeDisplay');
-    const fontSelect = document.getElementById('fontSelect');
+
+    // Selezione del numero di parole evidenziate
     const wordCountSelect = document.getElementById('wordCountSelect');
+
+    // Selezione della dimensione del testo
     const fontSizeSelect = document.getElementById('fontSizeSelect');
+
+    // Selezione del font
+    const fontSelect = document.getElementById('fontSelect');
+
+    // Selezione del colore dell'evidenziazione
+    const highlightColorSelect = document.getElementById('highlightColor');
+
+    // Selezione del tema
+    const themeSelect = document.getElementById('themeSelect');
+
+    // Controlli per spostare il testo
     const moveTextUpButton = document.getElementById('moveTextUp');
     const moveTextDownButton = document.getElementById('moveTextDown');
 
+    // Spinner di caricamento
+    const spinner = document.getElementById('spinner');
+
+    // Selettore dell'indice
+    const tocSelect = document.getElementById('tocSelect');
+
+    // Variabili globali
     let wordIndex = 0;
     let intervalId;
-    let speed = 5; // parole al secondo
+    let speed = 200; // Velocità in parole per minuto (WPM)
     let isPaused = false;
-    let spans = []; // Array globale di span.word
+    let spans = []; // Array di span.word
     let tocItems = []; // Array per l'indice del libro
     let wordCount = 3; // Numero di parole da evidenziare
     let fontSize = 18; // Dimensione del testo
     let highlightColor = '#fff9c4'; // Colore di default per l'evidenziazione
-    let verticalOffset = 0; // Offset verticale per l'allineamento del testo
+    let verticalOffset = 0; // Offset verticale per spostare il testo
 
-
-    // Funzione per mostrare lo spinner
-    function showSpinner() {
-        spinner.style.display = 'block';
-    }
-
-    // Funzione per nascondere lo spinner
-    function hideSpinner() {
-        spinner.style.display = 'none';
-    }
-
-    // Aggiorna la visualizzazione della velocità
-    function updateSpeedDisplay() {
-        speedDisplay.textContent = speed;
-    }
-
-    // Aggiorna la visualizzazione del numero di parole
-    function updateWordCountDisplay() {
-        wordCountDisplay.textContent = wordCount;
-    }
-
-    // Aggiorna la visualizzazione della dimensione del testo
-    function updateFontSizeDisplay() {
-        fontSizeDisplay.textContent = fontSize;
-    }
-
-    // Aggiorna la dimensione del testo nel reader
-    function updateFontSize() {
-        readerDiv.style.fontSize = `${fontSize}px`;
-    }
-
-    // Aggiorna il font nel reader
-    function updateFont() {
-        readerDiv.style.fontFamily = fontSelect.value;
-    }
-
-    // Aggiorna il colore dell'evidenziazione
-    function updateHighlightColor() {
-        const style = document.documentElement.style;
-        style.setProperty('--highlight-color', highlightColorSelect.value);
-    }
-
-    // Aggiorna il tema
-    function updateTheme() {
-        document.body.className = themeSelect.value;
-    }
-
-    // Inizializza le opzioni dei colori pastello
+    // Funzione per inizializzare i colori dell'evidenziazione
     function initializeHighlightColors() {
         const colors = [
             { name: 'Giallo', value: '#fff9c4' },
@@ -111,63 +80,109 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightColorSelect.value = highlightColor;
     }
 
+    // Funzione per inizializzare le opzioni della dimensione del testo
+    function initializeFontSizeOptions() {
+        for (let i = 8; i <= 32; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            if (i === fontSize) {
+                option.selected = true;
+            }
+            fontSizeSelect.appendChild(option);
+        }
+    }
+
+    // Chiamate alle funzioni di inizializzazione
     initializeHighlightColors();
-    updateSpeedDisplay();
-    updateWordCountDisplay();
-    updateFontSizeDisplay();
-    updateFontSize();
-    updateFont();
+    initializeFontSizeOptions();
+
+    // Aggiorna il colore dell'evidenziazione nel CSS
+    function updateHighlightColor() {
+        const style = document.documentElement.style;
+        style.setProperty('--highlight-color', highlightColorSelect.value);
+    }
+
+    // Aggiorna il tema
+    function updateTheme() {
+        document.body.className = themeSelect.value;
+    }
+
+    // Aggiorna la dimensione del testo
+    function updateFontSize() {
+        fontSize = parseInt(fontSizeSelect.value);
+        readerDiv.style.fontSize = `${fontSize}px`;
+        // Calcola l'altezza della linea basata sulla dimensione del testo
+        const lineHeightRatio = 1.6; // Rapporto tra altezza della linea e dimensione del testo
+        const lineHeightPx = fontSize * lineHeightRatio;
+        readerDiv.style.lineHeight = `${lineHeightPx}px`;
+        // Aggiorna la variabile CSS per l'altezza della linea
+        readerDiv.style.setProperty('--line-height', `${lineHeightPx}px`);
+    }
+
+    // Aggiorna il font
+    function updateFont() {
+        readerDiv.style.fontFamily = fontSelect.value;
+    }
+
+    // Mostra lo spinner di caricamento
+    function showSpinner() {
+        spinner.style.display = 'block';
+    }
+
+    // Nascondi lo spinner di caricamento
+    function hideSpinner() {
+        spinner.style.display = 'none';
+    }
+
+    // Aggiorna la visualizzazione della velocità
+    function updateSpeedDisplay() {
+        speedDisplay.textContent = speed;
+    }
+
+    // Aggiornamenti iniziali
     updateHighlightColor();
     updateTheme();
+    updateFontSize();
+    updateFont();
+    updateSpeedDisplay();
 
     // Event listener per aumentare la velocità
     increaseSpeedButton.addEventListener('click', () => {
-        if (speed < 20) {
-            speed++;
+        if (speed < 1000) {
+            speed += 10;
             updateSpeedDisplay();
         }
     });
 
     // Event listener per diminuire la velocità
     decreaseSpeedButton.addEventListener('click', () => {
-        if (speed > 1) {
-            speed--;
+        if (speed > 10) {
+            speed -= 10;
             updateSpeedDisplay();
         }
     });
 
-    // Event listener per aumentare il numero di parole
-    increaseWordCountButton.addEventListener('click', () => {
-        if (wordCount < 5) {
-            wordCount++;
-            updateWordCountDisplay();
-        }
+    // Event listener per cambiare il numero di parole
+    wordCountSelect.addEventListener('change', () => {
+        wordCount = parseInt(wordCountSelect.value);
     });
 
-    // Event listener per diminuire il numero di parole
-    decreaseWordCountButton.addEventListener('click', () => {
-        if (wordCount > 1) {
-            wordCount--;
-            updateWordCountDisplay();
-        }
+    // Event listener per spostare il testo verso l'alto
+    moveTextUpButton.addEventListener('click', () => {
+        verticalOffset -= 1; // Modifica l'offset a piacere
+        readerDiv.style.transform = `translateY(${verticalOffset}px)`;
     });
 
-    // Event listener per aumentare la dimensione del testo
-    increaseFontSizeButton.addEventListener('click', () => {
-        if (fontSize < 36) {
-            fontSize += 1;
-            updateFontSizeDisplay();
-            updateFontSize();
-        }
+    // Event listener per spostare il testo verso il basso
+    moveTextDownButton.addEventListener('click', () => {
+        verticalOffset += 1; // Modifica l'offset a piacere
+        readerDiv.style.transform = `translateY(${verticalOffset}px)`;
     });
 
-    // Event listener per diminuire la dimensione del testo
-    decreaseFontSizeButton.addEventListener('click', () => {
-        if (fontSize > 12) {
-            fontSize -= 1;
-            updateFontSizeDisplay();
-            updateFontSize();
-        }
+    // Event listener per cambiare la dimensione del testo
+    fontSizeSelect.addEventListener('change', () => {
+        updateFontSize();
     });
 
     // Event listener per cambiare il font
@@ -266,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Funzione per iniziare la sottolineatura delle parole
     function startHighlighting(startIndex) {
-        const interval = 1000 / speed;
+        const interval = (60000 * wordCount) / speed; // Calcola l'intervallo in millisecondi
 
         if (intervalId) {
             clearInterval(intervalId);
@@ -482,56 +497,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     `;
     document.head.appendChild(style);
-
-        // Inizializza le opzioni della dimensione del testo
-
-    function initializeFontSizeOptions() {
-        for (let i = 8; i <= 32; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = i;
-            if (i === fontSize) {
-                option.selected = true;
-            }
-            fontSizeSelect.appendChild(option);
-        }
-    }
-
-    initializeFontSizeOptions();
-
-    // Aggiorna la dimensione del testo nel reader
-    function updateFontSize() {
-        fontSize = parseInt(fontSizeSelect.value);
-        fontSizeDisplay.textContent = fontSize;
-        readerDiv.style.fontSize = `${fontSize}px`;
-        // Calcola l'altezza della linea basata sulla dimensione del testo
-        const lineHeightRatio = 1.6; // Rapporto tra altezza della linea e dimensione del testo
-        const lineHeightPx = fontSize * lineHeightRatio;
-        readerDiv.style.lineHeight = `${lineHeightPx}px`;
-        // Aggiorna la variabile CSS per l'altezza della linea
-        readerDiv.style.setProperty('--line-height', `${lineHeightPx}px`);
-    }
-
-    // Event listener per cambiare il numero di parole
-    wordCountSelect.addEventListener('change', () => {
-        wordCount = parseInt(wordCountSelect.value);
-    });
-
-    // Event listener per spostare il testo verso l'alto
-    moveTextUpButton.addEventListener('click', () => {
-        verticalOffset -= 1; // Modifica l'offset a piacere
-        readerDiv.style.transform = `translateY(${verticalOffset}px)`;
-    });
-
-    // Event listener per spostare il testo verso il basso
-    moveTextDownButton.addEventListener('click', () => {
-        verticalOffset += 1; // Modifica l'offset a piacere
-        readerDiv.style.transform = `translateY(${verticalOffset}px)`;
-    });
-
-    // Event listener per cambiare la dimensione del testo
-    fontSizeSelect.addEventListener('change', () => {
-        updateFontSize();
-    });
-    
 });
