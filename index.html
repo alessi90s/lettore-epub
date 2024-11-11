@@ -2,36 +2,20 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>EPUB Reader Online</title>
+    <title>EPUB Reader Semplice</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <h1>EPUB Reader Online</h1>
-    </header>
+    <h1>EPUB Reader Semplice</h1>
 
     <div id="controls">
         <input type="file" id="epubFile" accept=".epub" />
-
-        <label for="speed">Velocità (parole al secondo): </label>
-        <input type="number" id="speed" value="5" min="1" max="20" />
-
-        <button id="start">Inizia Lettura</button>
-        <button id="stop">Ferma Lettura</button>
-        <button id="toggleNightMode">Modalità Notte</button>
     </div>
 
-    <div id="toc">
-        <h2>Indice</h2>
-        <ul id="tocList">
-            <!-- I titoli dei capitoli verranno inseriti qui -->
-        </ul>
-    </div>
-
-    <main id="reader">
+    <div id="reader">
         <div id="spinner">Caricamento...</div>
-    </main>
+    </div>
 
     <!-- Includi JSZip tramite CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
