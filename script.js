@@ -8,9 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedInput = document.getElementById('speed');
     const spinner = document.getElementById('spinner');
     const tocList = document.getElementById('tocList');
-    const prevPageBtn = document.getElementById('prevPage');
-    const nextPageBtn = document.getElementById('nextPage');
     const toggleNightModeBtn = document.getElementById('toggleNightMode');
+    const containerDiv = document.getElementById('container');
 
     let wordIndex = 0;
     let intervalId;
@@ -53,6 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         wordIndex = index;
                         clearHighlights();
                         span.classList.add('highlight');
+                        // Scrolla verso la parola selezionata
+                        span.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     });
                 });
 
@@ -62,8 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mappa i capitoli agli indici delle parole
                 mapChaptersToWordIndices();
 
+                // Nascondi gli elementi per creare un'esperienza immersiva
+                containerDiv.classList.add('hidden');
+                readerDiv.style.display = 'block';
+
                 hideSpinner();
-                alert('EPUB caricato correttamente!');
+                // alert('EPUB caricato correttamente!');
             } catch (error) {
                 console.error('Errore nel caricamento dell\'EPUB:', error);
                 alert('Errore nel caricamento dell\'EPUB. Controlla la console per maggiori dettagli.');
@@ -96,15 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleNightModeBtn.addEventListener('click', () => {
         document.body.classList.toggle('night-mode');
         readerDiv.classList.toggle('night-mode');
-    });
-
-    // Eventi per la navigazione delle pagine
-    nextPageBtn.addEventListener('click', () => {
-        scrollByPage('next');
-    });
-
-    prevPageBtn.addEventListener('click', () => {
-        scrollByPage('prev');
     });
 
     // Funzione per iniziare la sottolineatura delle parole
@@ -341,22 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funzione per pulire tutti gli highlight
     function clearHighlights() {
         spans.forEach(span => span.classList.remove('highlight'));
-    }
-
-    // Funzione per navigare tra le pagine
-    function scrollByPage(direction) {
-        const readerHeight = readerDiv.clientHeight;
-        if (direction === 'next') {
-            readerDiv.scrollBy({
-                top: readerHeight,
-                behavior: 'smooth'
-            });
-        } else if (direction === 'prev') {
-            readerDiv.scrollBy({
-                top: -readerHeight,
-                behavior: 'smooth'
-            });
-        }
     }
 
     // Funzione per gestire le immagini all'interno dei capitoli
