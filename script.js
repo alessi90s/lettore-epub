@@ -173,4 +173,108 @@ document.addEventListener('DOMContentLoaded', () => {
                 const filePath = resolvePath(rootfilePath, href);
 
                 if (mediaType.includes('application/xhtml+xml') || mediaType.includes('text/html')) {
-                    const fileContent = await
+                    const fileContent = await zip.file(filePath).async('string');
+                    const fileDoc = parser.parseFromString(fileContent, 'application/xhtml+xml');
+
+                    // Gestisci le immagini
+                    await handleImages(zip, fileDoc, filePath);
+
+                    // Avvolgi le parole in span
+                    const processedHTML = await wrapWordsInSpans(fileDoc.body.innerHTML);
+
+                    fullText += processedHTML;
+                }
+            }
+        }
+
+        return fullText;
+    }
+
+    // Funzione per gestire le immagini all'interno dei capitoli
+    async function handleImages(zip, doc, basePath) {
+        const images = doc.querySelectorAll('img');
+        for (let img of images) {
+            const src = img.getAttribute('src');
+            if (src) {
+                const imagePath = resolvePath(basePath, src);
+                const imageFile = zip.file(imagePath);
+                if (imageFile) {
+                    const blob = await imageFile.async('blob');
+                    const url = URL.createObjectURL(blob);
+                    img.setAttribute('src', url);
+                } else {
+                    console.warn('Immagine non trovata:', imagePath);
+                }
+            }
+        }
+    }
+
+    // Funzione per risolvere il percorso del file
+    function resolvePath(basePath, relativePath) {
+        const baseParts = basePath.split('/');
+        baseParts.pop(); // Rimuove il nome del file
+        const relativeParts = relativePath.split('/');
+
+        for (let part of relativeParts) {
+            if (part === '..') {
+                baseParts.pop();
+            } else if (part !== '.') {
+                baseParts.push(part);
+            }
+        }
+
+        return baseParts.join('/');
+    }
+
+    // Funzione per avvolgere ogni parola in uno span
+    async function wrapWordsInSpans(htmlContent) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+
+        // Funzione ricorsiva per attraversare tutti i nodi di testo
+        function traverse(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const parentTag = node.parentNode.tagName.toLowerCase();
+                // Evita di avvolgere parole all'interno di tag che non dovrebbero essere modificati
+                const nonProcessTags = ['script', 'style', 'a', 'code', 'pre', 'img', 'svg'];
+                if (nonProcessTags.includes(parentTag)) {
+                    return;
+                }
+
+                const words = node.textContent.split(/(\s+)/); // Mantiene gli spazi
+                const fragment = document.createDocumentFragment();
+
+                words.forEach(word => {
+                    if (/\s+/.test(word)) {
+                        fragment.appendChild(document.createTextNode(word));
+                    } else {
+                        const span = document.createElement('span');
+                        span.textContent = word;
+                        span.classList.add('word');
+                        fragment.appendChild(span);
+                    }
+                });
+
+                node.parentNode.replaceChild(fragment, node);
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // Evita di attraversare i nodi che non devono essere modificati
+                const nonProcessTags = ['script', 'style', 'a', 'code', 'pre', 'img', 'svg'];
+                const tagName = node.tagName.toLowerCase();
+                if (nonProcessTags.includes(tagName)) {
+                    return;
+                }
+
+                Array.from(node.childNodes).forEach(child => traverse(child));
+            }
+        }
+
+        traverse(doc.body);
+
+        return doc.body.innerHTML;
+    }
+
+    // Funzione per pulire tutti gli highlight
+    function clearHighlights() {
+        spans.forEach(span => span.classList.remove('highlight'));
+    }
+});
