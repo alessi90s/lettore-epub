@@ -23,6 +23,7 @@ body.night {
     color: #f5f5f5;
 }
 
+/* Header */
 header {
     background-color: transparent;
     padding: 20px;
@@ -32,75 +33,77 @@ header {
 header h1 {
     margin: 0;
     font-family: 'Georgia', serif;
-}/* style.css */
+    font-size: 2em;
+}
 
-/* ... Altri stili precedenti ... */
-
-/* Barra dei controlli in alto */
-#controls-top,
-#controls-top-second-row {
+/* Contenitore per le barre dei controlli in alto */
+#controls-container {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     width: 100%;
     background-color: rgba(255, 255, 255, 0.9);
+    transition: background-color 0.3s ease;
+}
+
+body.night #controls-container {
+    background-color: rgba(46, 46, 46, 0.9);
+}
+
+body.sepia #controls-container {
+    background-color: rgba(244, 236, 216, 0.9);
+}
+
+/* Prime righe di controlli */
+#controls-top,
+#controls-top-second-row,
+#playback-controls {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
-}
-
-#controls-top {
-    position: sticky;
-    top: 0;
     padding: 5px;
 }
 
-body.night #controls-top,
-body.night #controls-top-second-row {
-    background-color: rgba(46, 46, 46, 0.9);
+/* Layout per playback-controls */
+#playback-controls {
+    justify-content: center;
+    margin: 10px 0;
 }
 
-body.sepia #controls-top,
-body.sepia #controls-top-second-row {
-    background-color: rgba(244, 236, 216, 0.9);
-}
-
+/* Spacing tra gli elementi */
 #controls-top > *,
 #controls-top-second-row > * {
     margin: 2px 4px;
 }
 
+/* Pulsanti */
 #controls-top button,
-#controls-top select,
-#controls-top label,
-#controls-top span,
 #controls-top-second-row button,
-#controls-top-second-row select,
-#controls-top-second-row label,
-#controls-top-second-row span {
-    font-size: 0.9em;
-}
-
-#controls-top button,
-#controls-top-second-row button {
-    padding: 4px;
+#playback-controls button {
+    padding: 6px;
     margin: 2px;
     font-size: 1em;
     cursor: pointer;
     border: none;
     background-color: transparent;
     color: inherit;
+    transition: color 0.3s ease;
 }
 
 #controls-top button i,
-#controls-top-second-row button i {
+#controls-top-second-row button i,
+#playback-controls button i {
     font-size: 1em;
 }
 
 #controls-top button:hover,
-#controls-top-second-row button:hover {
+#controls-top-second-row button:hover,
+#playback-controls button:hover {
     color: #007BFF;
 }
 
+/* Selettori */
 #controls-top select,
 #controls-top-second-row select {
     padding: 4px;
@@ -108,6 +111,7 @@ body.sepia #controls-top-second-row {
     font-size: 0.9em;
     border: 1px solid #ccc;
     border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body.night #controls-top select,
@@ -124,47 +128,47 @@ body.sepia #controls-top-second-row select {
     border: 1px solid #a58e6d;
 }
 
+/* Etichette e span */
+#controls-top label,
+#controls-top-second-row label,
+#playback-controls label {
+    margin: 0 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
 #controls-top span,
 #controls-top-second-row span {
     margin: 0 5px;
     min-width: 30px;
     text-align: center;
     display: inline-block;
+    font-size: 0.9em;
 }
 
-#playback-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Pulsanti playback (PLAY, PAUSA, STOP) più grandi */
+#playback-controls button {
+    font-size: 2em;
+    padding: 10px 15px;
     margin: 5px;
 }
 
-#playback-controls button {
-    font-size: 1.5em;
-    padding: 8px;
-}
-
-#controls-top-second-row {
-    padding: 5px;
-}
-
-#moveTextUp,
-#moveTextDown {
-    font-size: 1em;
-}
-
-/* ... Restanti stili ... */
-
 /* Pulsante di selezione file personalizzato */
 .custom-file-upload {
-    display: inline-block;
-    padding: 4px;
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
     cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    background-color: transparent;
     color: inherit;
 }
 
 .custom-file-upload:hover {
-    color: #007BFF;
+    background-color: #007BFF;
+    color: white;
 }
 
 #epubFile {
@@ -175,14 +179,14 @@ body.sepia #controls-top-second-row select {
 #reader {
     padding: 40px;
     margin: 20px auto;
-    background-color: transparent;
-    font-size: 18px;
     max-width: 800px;
     overflow-y: auto;
     position: relative;
-    /* Variabile CSS per l'altezza della linea */
-    --line-height: 28.8px; /* Valore iniziale, verrà aggiornato dinamicamente */
-    line-height: var(--line-height);
+    font-size: 18px;
+    font-family: 'Georgia', serif;
+    line-height: var(--line-height, 28.8px);
+    transform: translateY(0px);
+    transition: transform 0.2s ease;
     /* Sfondo a righe del quaderno */
     background: repeating-linear-gradient(
         white,
@@ -190,6 +194,8 @@ body.sepia #controls-top-second-row select {
         #e6e6e6 calc(var(--line-height) - 1px),
         #e6e6e6 var(--line-height)
     );
+    /* Rendere il background fisso quando necessario */
+    background-attachment: scroll;
 }
 
 body.sepia #reader {
@@ -217,17 +223,21 @@ body.night #reader {
     margin: 10px auto;
 }
 
+/* Stili per le parole */
 .word {
     display: inline;
     margin: 0;
     padding: 0;
     cursor: pointer;
+    white-space: normal; /* Assicurarsi che lo spazio bianco venga gestito correttamente */
 }
 
+/* Evidenziazione */
 .word.highlight {
     background-color: var(--highlight-color) !important;
 }
 
+/* Spinner di caricamento */
 #spinner {
     display: none;
     position: absolute;
@@ -260,6 +270,7 @@ body.night #spinner {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    transition: background-color 0.3s ease;
 }
 
 body.night #controls-bottom {
@@ -276,6 +287,7 @@ body.sepia #controls-bottom {
     font-size: 0.9em;
     border: 1px solid #ccc;
     border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body.night #controls-bottom select {
@@ -288,4 +300,43 @@ body.sepia #controls-bottom select {
     background-color: #e0d7c6;
     color: #5b4636;
     border: 1px solid #a58e6d;
+}
+
+/* Line Breaks dopo i punti */
+.word::after {
+    content: '';
+}
+
+.word.highlight::after {
+    content: '';
+}
+
+/* Aggiungere interruzioni di linea dopo i punti tramite JS */
+br {
+    display: block;
+    content: "";
+    margin: 0;
+    padding: 0;
+}
+
+/* Scrolling del reader per allineare il testo */
+#reader {
+    scroll-behavior: smooth;
+}
+
+/* Media Queries per la Responsività */
+@media (max-width: 768px) {
+    /* Ridurre la dimensione dei pulsanti playback sui dispositivi mobili */
+    #playback-controls button {
+        font-size: 1.5em;
+        padding: 8px 12px;
+    }
+
+    /* Adattare i controlli per schermi più piccoli */
+    #controls-top,
+    #controls-top-second-row,
+    #playback-controls,
+    #controls-bottom {
+        flex-direction: column;
+    }
 }
