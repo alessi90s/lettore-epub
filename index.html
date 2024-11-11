@@ -7,26 +7,24 @@
 </head>
 <body>
 
-    <div id="container">
-        <h1>EPUB Reader Online</h1>
+    <h1>EPUB Reader Online</h1>
 
-        <div id="controls">
-            <input type="file" id="epubFile" accept=".epub" />
+    <div id="controls">
+        <input type="file" id="epubFile" accept=".epub" />
 
-            <label for="speed">Velocità (parole al secondo): </label>
-            <input type="number" id="speed" value="5" min="1" max="20" />
+        <label for="speed">Velocità (parole al secondo): </label>
+        <input type="number" id="speed" value="5" min="1" max="20" />
 
-            <button id="start">Inizia Lettura</button>
-            <button id="stop">Ferma Lettura</button>
-            <button id="toggleNightMode">Modalità Notte</button>
-        </div>
+        <button id="start">Inizia Lettura</button>
+        <button id="stop">Ferma Lettura</button>
+        <button id="toggleNightMode">Modalità Notte</button>
+    </div>
 
-        <div id="toc">
-            <h2>Indice</h2>
-            <ul id="tocList">
-                <!-- I titoli dei capitoli verranno inseriti qui -->
-            </ul>
-        </div>
+    <div id="toc">
+        <h2>Indice</h2>
+        <ul id="tocList">
+            <!-- I titoli dei capitoli verranno inseriti qui -->
+        </ul>
     </div>
 
     <div id="reader">
