@@ -1,72 +1,49 @@
 /* style.css */
 
+/* Reset CSS */
 * {
     box-sizing: border-box;
-}
-
-body {
-    font-family: 'Georgia', serif;
     margin: 0;
     padding: 0;
-    background-color: #f5f5f5;
-    color: #333;
-    transition: background-color 0.3s, color 0.3s;
 }
 
-body.night-mode {
+/* Temi */
+body.classic {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+body.sepia {
+    background-color: #f4ecd8;
+    color: #5b4636;
+}
+
+body.night {
     background-color: #2e2e2e;
     color: #f5f5f5;
 }
 
 header {
-    background-color: #fff;
+    background-color: transparent;
     padding: 20px;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: fixed;
-    width: 100%;
-    top: 0;
-    z-index: 1000;
-}
-
-body.night-mode header {
-    background-color: #424242;
 }
 
 header h1 {
     margin: 0;
-    color: #333;
-}
-
-body.night-mode header h1 {
-    color: #f5f5f5;
+    font-family: 'Georgia', serif;
 }
 
 #reader {
     padding: 40px;
-    margin: 80px auto 80px auto; /* Spazio per header e footer */
-    background-color: #fff;
+    margin: 80px auto 80px auto;
+    background-color: transparent;
     line-height: 1.6;
     font-size: 18px;
     max-width: 800px;
     overflow-y: auto;
     position: relative;
     min-height: calc(100vh - 160px);
-    background: repeating-linear-gradient(
-        white,
-        white 24px,
-        #e6e6e6 24px,
-        #e6e6e6 25px
-    );
-}
-
-body.night-mode #reader {
-    background: repeating-linear-gradient(
-        #333333,
-        #333333 24px,
-        #555555 24px,
-        #555555 25px
-    );
 }
 
 #reader img {
@@ -83,11 +60,7 @@ body.night-mode #reader {
 }
 
 .word.highlight {
-    background-color: #fff9c4; /* Giallo pastello */
-}
-
-body.night-mode .word.highlight {
-    background-color: #fff59d; /* Giallo pastello leggermente più scuro per la modalità notte */
+    background-color: var(--highlight-color) !important;
 }
 
 #spinner {
@@ -97,10 +70,17 @@ body.night-mode .word.highlight {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 1.5em;
+}
+
+body.classic #spinner {
     color: #555;
 }
 
-body.night-mode #spinner {
+body.sepia #spinner {
+    color: #5b4636;
+}
+
+body.night #spinner {
     color: #f5f5f5;
 }
 
@@ -109,9 +89,8 @@ body.night-mode #spinner {
     position: fixed;
     bottom: 0;
     width: 100%;
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.9);
     padding: 10px;
-    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -119,12 +98,12 @@ body.night-mode #spinner {
     z-index: 1000;
 }
 
-body.night-mode #controls {
-    background-color: #424242;
+body.night #controls {
+    background-color: rgba(46, 46, 46, 0.9);
 }
 
-#controls input[type="file"] {
-    margin-right: 10px;
+body.sepia #controls {
+    background-color: rgba(244, 236, 216, 0.9);
 }
 
 #controls label {
@@ -133,56 +112,59 @@ body.night-mode #controls {
 }
 
 #controls button {
-    padding: 8px 12px;
+    padding: 8px;
     margin: 5px;
     font-size: 1em;
     cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f5f5f5;
-    transition: background-color 0.3s;
+    border: none;
+    background-color: transparent;
+    color: inherit;
 }
 
 #controls button:hover {
-    background-color: #e0e0e0;
+    color: #007BFF;
 }
 
-body.night-mode #controls button {
-    background-color: #616161;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-#speedDisplay {
-    width: 30px;
-    display: inline-block;
-    text-align: center;
-}
-
-#tocSelect {
+#controls select {
     padding: 6px;
-    margin: 0 10px;
+    margin: 0 5px;
     font-size: 1em;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-body.night-mode #tocSelect {
-    background-color: #616161;
+body.night #controls select {
+    background-color: #4a4a4a;
     color: #f5f5f5;
     border: 1px solid #888;
 }
 
-/* style.css */
-
-/* ... altri stili ... */
-
-.word.highlight {
-    background-color: #fff9c4 !important; /* Giallo pastello */
+body.sepia #controls select {
+    background-color: #e0d7c6;
+    color: #5b4636;
+    border: 1px solid #a58e6d;
 }
 
-body.night-mode .word.highlight {
-    background-color: #fff59d !important; /* Giallo pastello leggermente più scuro per la modalità notte */
+#controls span {
+    margin: 0 5px;
+    min-width: 30px;
+    text-align: center;
+    display: inline-block;
 }
 
-/* ... altri stili ... */
+/* Pulsante di selezione file personalizzato */
+.custom-file-upload {
+    display: inline-block;
+    padding: 8px;
+    cursor: pointer;
+    color: inherit;
+}
+
+.custom-file-upload:hover {
+    color: #007BFF;
+}
+
+#epubFile {
+    display: none;
+}
+
