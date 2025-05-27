@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>EPUB Flip-Reader</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!-- StPageFlip – effetto sfoglio -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.min.css">
+
+<style>
+/* ---------- Layout principale ---------- */
+body{
+    margin:0;
+    background:#e6e3d8;
+    font-family:Georgia, serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    height:100vh;
+}
+#controls{margin:1rem 0;}
+#book{
+    width:90vw;           /* si adatta allo schermo */
+    max-width:800px;
+    height:80vh;
+    background:#fff;
+    box-shadow:0 0 15px rgba(0,0,0,.3);
+}
+
+/* ---------- Pagine ---------- */
+.page{
+    width:100%;
+    height:100%;
+    overflow-y:auto;
+    padding:2rem 1.5rem;
+    box-sizing:border-box;
+    line-height:1.6;
+}
+.page p{
+    margin:0 0 1em;
+    text-indent:1.8em;
+    transition:background-color .25s;
+}
+
+/* paragrafo attivo + parole chiave */
+.page p.current      {background:#fffccf;}
+.page p.current span.key{font-weight:700;color:#000;}
+</style>
+</head>
+
+<body>
+    <!-- ---------- Controlli ---------- -->
+    <div id="controls">
+        <input type="file" id="file" accept=".epub">
+        <button id="prev">←</button>
+        <button id="next">→</button>
+    </div>
+
+    <!-- ---------- Contenitore libro ---------- -->
+    <div id="book"></div>
+
+    <!-- Librerie esterne -->
+    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/page-flip.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+
+<script>
+/* ---------- Riferimenti DOM ---------- */
+const input   = document.getElementById('file');
+const bookBox = document.getElementById('book');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+
+let pageFlip;   // istanza di PageFlip
+
+/* ---------- Utility: evidenzia primo paragrafo ---------- */
+function boldFirstWords(node, n = 5){
+    const words = node.textContent.trim().split(/\s+/);
+    const limit = Math.min(n, words.length);
+    for(let i=0; i<limit; i++){
+        words[i] = `<span class="key">${words[i]}</span>`;
+    }
+    node.innerHTML = words.join(' ');
+}
+function highlightParagraph(pageEl){
+    if(!pageEl) return;
+    const paras = pageEl.querySelectorAll('p');
+    paras.forEach(p => p.classList.remove('current'));
+    if(paras.length){
+        const p = paras[0];
+        if(!p.dataset.done){          // lo facciamo solo una volta
+            boldFirstWords(p, 5);
+            p.dataset.done = 1;
+        }
+        p.classList.add('current');
+    }
+}
+
+/* ---------- Costruzione pagine dallo spine ---------- */
+async function buildPages(book){
+    bookBox.innerHTML = '';           // pulizia
+
+    const htmlPages = [];
+    for(const item of book.spine.spineItems){
+        await item.load(book.load.bind(book)); // carica risorsa
+        const html = await item.render();      // HTML capitolo
+        htmlPages.push(html);
+        item.unload();                         // libera memoria
+    }
+
+    // crea un div .page per ogni sezione
+    htmlPages.forEach(html =>{
+        const page = document.createElement('div');
+        page.className = 'page';
+        page.innerHTML = html;
+        bookBox.appendChild(page);
+    });
+
+    /* ---------- Inizializza PageFlip ---------- */
+    pageFlip = new PageFlip(document.getElementById('book'),{
+        width : bookBox.clientWidth / 2,   // pagina singola = metà contenitore
+        height: bookBox.clientHeight,
+        size  : 'stretch',
+        maxShadowOpacity: .5,
+        showCover: true,
+        mobileScrollSupport: true
+    });
+    pageFlip.loadFromHTML(document.querySelectorAll('.page')); /* :contentReference[oaicite:0]{index=0} */
+
+    // controlli navigazione
+    prevBtn.onclick = () => pageFlip.flipPrev();
+    nextBtn.onclick = () => pageFlip.flipNext();
+
+    // evidenziazione al cambio pagina
+    pageFlip.on('flip', e =>{
+        const idx  = e.data;
+        const page = document.querySelectorAll('.page')[idx];
+        highlightParagraph(page);
+    });
+
+    // prima evidenziazione immediata
+    highlightParagraph(document.querySelector('.page'));
+}
+
+/* ---------- Gestione file EPUB ---------- */
+input.addEventListener('change', async e =>{
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const buf  = await file.arrayBuffer();
+    const book = ePub(buf);          // crea istanza di epub.js
+    await book.ready;
+
+    buildPages(book);
+});
+</script>
+</body>
+</html>
