@@ -47,11 +47,11 @@
 
       <div class="controls-group">
         <label class="controls-label">Velocità auto evidenziatore</label>
-        <!-- range più ampio: 0,2s - 2,5s -->
-        <input id="speedRange" type="range" min="200" max="2500" step="100" value="900">
+        <!-- 0 = lentissimo (~2s), 100 = velocissimo (~0,06s) -->
+        <input id="speedRange" type="range" min="0" max="100" step="1" value="60">
         <div class="speed-label">
           <span>Lento</span>
-          <span id="speedValue">0,9 s</span>
+          <span id="speedValue">0,00 s</span>
           <span>Veloce</span>
         </div>
       </div>
