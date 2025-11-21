@@ -238,22 +238,37 @@ body {
   min-width: 0;
 }
 
+/* QUI: quaderno a righe + solo scroll in basso */
+
 .book-page {
   flex: 1;
   width: 100%;
   max-width: 900px;
-  background: var(--bg-book);
+  background-color: var(--bg-book);
   margin: 0 auto;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   padding: 1.5rem 2rem;
   overflow-y: auto;
+  overflow-x: hidden; /* niente scroll laterale */
   position: relative;
+
+  /* effetto quaderno a righe */
+  background-image:
+    linear-gradient(to right, rgba(255, 82, 82, 0.45) 60px, transparent 60px),
+    repeating-linear-gradient(
+      to bottom,
+      #fdf7ec 0px,
+      #fdf7ec 23px,
+      #f1e8d2 24px
+    );
+  background-size: 100% 100%;
 }
 
 .page-inner {
   max-width: 60ch;
   margin: 0 auto;
+  padding-left: 50px; /* testo dopo il margine rosso del quaderno */
 }
 
 .page-footer {
@@ -295,13 +310,14 @@ body {
   font-size: 1rem;
   color: #262626;
   transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-  padding: 0.1rem 0;
+  padding: 0.15rem 0.35rem;
   border-radius: var(--radius-md);
   cursor: pointer;
+  background-color: transparent;
 }
 
 .book-paragraph:hover {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .book-paragraph.active-paragraph {
@@ -315,7 +331,8 @@ body {
 
 .book-paragraph .word {
   display: inline;
-  white-space: pre;
+  white-space: normal;       /* ← ora il testo VA A CAPO normalmente */
+  word-wrap: break-word;
 }
 
 .word-highlight {
@@ -377,6 +394,7 @@ body {
 
   .page-inner {
     max-width: 100%;
+    padding-left: 45px;
   }
 
   .status {
@@ -411,4 +429,3 @@ body {
     font-size: 0.96rem;
   }
 }
-
