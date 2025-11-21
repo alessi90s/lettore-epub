@@ -13,14 +13,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const speedRange = document.getElementById("speedRange");
   const speedValue = document.getElementById("speedValue");
 
-  // 0 => 3000 ms (3s, lentissimo)
-  // 100 => 200 ms (0,2s, molto veloce)
-  // lineare, sx = lento, dx = veloce
+  // 0 => 5000 ms (5s lentissimo)
+  // 100 => 200 ms (0,2s veloce)
   function sliderValueToMs(value) {
     const v = Math.max(0, Math.min(100, Number(value)));
-    const slowMs = 3000; // sinistra
-    const fastMs = 200;  // destra
-    const t = v / 100;   // 0..1
+    const slowMs = 5000;
+    const fastMs = 200;
+    const t = v / 100;
     return Math.round(slowMs - (slowMs - fastMs) * t);
   }
 
@@ -108,6 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       console.error(err);
       pageContainer.innerHTML = `
+        <div class="paper-lines"></div>
         <div class="page-inner">
           <div class="placeholder">
             <h1>Errore di lettura ⚠️</h1>
@@ -128,8 +128,20 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentPageIndex = 0;
     state.currentParagraphIndex = 0;
     state.currentWordIndex = 0;
-    pageContainer.innerHTML = "";
-    pageIndicator.textContent = "Pagina 0 / 0";
+
+    // ripristina il contenuto del quaderno (con le righe già nel DOM)
+    pageContainer.innerHTML = `
+      <div class="paper-lines"></div>
+      <div class="page-inner">
+        <div class="placeholder">
+          <h1>Benvenuto 👋</h1>
+          <p>Carica un file <strong>.epub</strong> dal pulsante in alto per iniziare a leggere.</p>
+          <p>Il paragrafo che stai leggendo verrà illuminato, con <strong>4 parole alla volta</strong> evidenziate con un effetto evidenziatore pastello.</p>
+        </div>
+      </div>
+    `;
+
+    pageIndicator.textContent = `0 / 0`;
   }
 
   // Estrae i paragrafi dal file EPUB usando JSZip + XML
@@ -163,7 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const opfText = await opfFile.async("string");
     const opfDoc = parser.parseFromString(opfText, "application/xml");
 
-    // Manifest: id -> href
     const manifestItems = {};
     opfDoc.querySelectorAll("manifest > item").forEach((item) => {
       const id = item.getAttribute("id");
@@ -174,7 +185,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Spine: ordine di lettura
     const spineHrefs = [];
     opfDoc.querySelectorAll("spine > itemref").forEach((ref) => {
       const idref = ref.getAttribute("idref");
@@ -251,11 +261,15 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentParagraphIndex = 0;
     state.currentWordIndex = 0;
 
-    pageContainer.innerHTML = "";
-    const inner = document.createElement("div");
-    inner.className = "page-inner";
-
     const paras = state.pages[pageIndex];
+
+    pageContainer.innerHTML = `
+      <div class="paper-lines"></div>
+      <div class="page-inner"></div>
+    `;
+
+    const inner = pageContainer.querySelector(".page-inner");
+
     paras.forEach((text, idx) => {
       const p = document.createElement("p");
       p.className = "book-paragraph";
@@ -270,7 +284,6 @@ document.addEventListener("DOMContentLoaded", () => {
       inner.appendChild(p);
     });
 
-    pageContainer.appendChild(inner);
     setActiveParagraph(0);
     updatePageIndicator();
   }
@@ -278,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updatePageIndicator() {
     const total = state.pages.length;
     const current = total ? state.currentPageIndex + 1 : 0;
-    pageIndicator.textContent = `Pagina ${current} / ${total}`;
+    pageIndicator.textContent = `${current} / ${total}`;
   }
 
   function changePage(direction) {
@@ -301,7 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Highlight fluido -----------------------------------------------------
+  // --- Highlight fluido + frasi -------------------------------------------------
 
   function getSentenceBoundaries(words) {
     const sentenceStarts = [0];
@@ -371,7 +384,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (idx >= words.length) idx = words.length - 1;
     state.currentWordIndex = idx;
 
-    // trova la frase a cui appartiene l'indice
     let sentenceIndex = 0;
     for (let i = 0; i < sentenceStarts.length; i++) {
       if (idx >= sentenceStarts[i]) sentenceIndex = i;
@@ -445,7 +457,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // trova la frase corrente
     let sentenceIndex = 0;
     for (let i = 0; i < sentenceStarts.length; i++) {
       if (idx >= sentenceStarts[i]) sentenceIndex = i;
@@ -456,11 +467,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let nextIdx = idx + 1;
     if (nextIdx > sentEnd) {
-      // passa all'inizio della frase successiva
       if (sentenceIndex + 1 < sentenceStarts.length) {
         nextIdx = sentenceStarts[sentenceIndex + 1];
       } else {
-        // niente frase successiva: paragrafo finito
         goToNextParagraphStart();
         return;
       }
@@ -492,7 +501,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function startAuto() {
     stopAuto();
     state.autoTimerId = setInterval(advanceChunk, state.autoSpeedMs);
-    toggleAutoBtn.textContent = "⏸ Pausa evidenziatore";
+    toggleAutoBtn.textContent = "⏸";
     toggleAutoBtn.classList.add("active");
   }
 
@@ -501,7 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
       clearInterval(state.autoTimerId);
       state.autoTimerId = null;
     }
-    toggleAutoBtn.textContent = "▶ Auto evidenziatore";
+    toggleAutoBtn.textContent = "▶ Auto";
     toggleAutoBtn.classList.remove("active");
   }
 
