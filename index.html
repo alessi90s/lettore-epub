@@ -46,9 +46,17 @@
 
       <div class="controls-group-inline controls-speed">
         <span class="controls-title">Velocità</span>
-        <!-- 0 = 5s (lentissimo), 100 = 0,2s (veloce) -->
-        <input id="speedRange" type="range" min="0" max="100" step="1" value="40">
+        <button id="speedDown" class="btn btn-ghost" type="button">−</button>
         <span id="speedValue" class="speed-value">1,00 s</span>
+        <button id="speedUp" class="btn btn-ghost" type="button">+</button>
+      </div>
+
+      <div class="controls-group-inline">
+        <span class="controls-title">Scroll</span>
+        <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.8rem;">
+          <input type="checkbox" id="autoScrollToggle" checked>
+          <span>auto</span>
+        </label>
       </div>
     </section>
 
