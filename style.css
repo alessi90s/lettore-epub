@@ -223,16 +223,16 @@ body {
   overflow-x: hidden;
 }
 
-/* Quaderno: righe e margine rosso applicati a page-inner
-   -> si muovono insieme al testo nello scroll */
-.page-inner {
+/* Quaderno: righe e margine rosso sullo stesso layer del testo */
+.page-inner,
+#pageContainer {
   position: relative;
   max-width: 46ch;
   margin: 0 auto;
   padding: calc(var(--line-step) * 1.1) 48px calc(var(--line-step) * 1.1) 70px;
 
   background-image:
-    /* margine rosso vertical */
+    /* margine rosso verticale */
     linear-gradient(to right, rgba(255, 120, 120, 0.65) 46px, transparent 46px),
     /* righe orizzontali */
     repeating-linear-gradient(
@@ -243,7 +243,6 @@ body {
     );
 
   background-size: 100% auto;
-  /* piccolo offset in modo che le righe cadano sotto il testo */
   background-position: left calc(var(--line-step) * 0.2);
 }
 
@@ -371,9 +370,8 @@ body {
     flex: 1;
   }
 
-  .page-inner {
+  .page-inner,
+  #pageContainer {
     max-width: 100%;
   }
 }
-
-
