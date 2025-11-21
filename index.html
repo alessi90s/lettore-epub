@@ -51,6 +51,28 @@
         <button id="speedUp" class="btn btn-ghost" type="button">+</button>
       </div>
 
+      <div class="controls-group-inline controls-font">
+        <span class="controls-title">Testo</span>
+        <button id="fontDown" class="btn btn-ghost" type="button">A−</button>
+        <span id="fontSizeValue" class="font-size-value">18 px</span>
+        <button id="fontUp" class="btn btn-ghost" type="button">A+</button>
+      </div>
+
+      <div class="controls-group-inline">
+        <span class="controls-title">Font</span>
+        <select id="fontSelect" class="font-select">
+          <option value="system">System</option>
+          <option value="serif">Serif</option>
+          <option value="merriweather">Merriweather</option>
+          <option value="inter">Inter</option>
+        </select>
+      </div>
+
+      <div class="controls-group-inline">
+        <span class="controls-title">Colore</span>
+        <input type="color" id="highlightPicker" value="#ffef7d">
+      </div>
+
       <div class="controls-group-inline">
         <span class="controls-title">Scroll</span>
         <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.8rem;">
@@ -89,4 +111,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
