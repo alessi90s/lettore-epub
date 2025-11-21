@@ -47,18 +47,18 @@
 
       <div class="controls-group">
         <label class="controls-label">Velocità auto evidenziatore</label>
-        <!-- sinistra = lento (1,5s) / destra = veloce (0,3s) -->
-        <input id="speedRange" type="range" min="300" max="1500" step="50" value="900">
+        <!-- 0 = lentissimo (~2s), 100 = velocissimo (~0,08s) -->
+        <input id="speedRange" type="range" min="0" max="100" step="1" value="60">
         <div class="speed-label">
           <span>Lento</span>
-          <span id="speedValue">0,9 s</span>
+          <span id="speedValue">0,00 s</span>
           <span>Veloce</span>
         </div>
       </div>
 
       <p class="hint">
         Suggerimento: clicca su un paragrafo per dirgli
-        <strong>“sto leggendo questo”</strong>.  
+        <strong>“sto leggendo questo”</strong>.<br>
         L’evidenziatore pastello seguirà 4 parole alla volta.
       </p>
     </aside>
