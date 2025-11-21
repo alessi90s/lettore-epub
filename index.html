@@ -24,9 +24,10 @@
     </div>
   </header>
 
-  <!-- Corpo: controlli compatti + quaderno centrato -->
+  <!-- Corpo: controlli + quaderno centrato -->
   <main class="layout-center">
-    <section class="controls-bar">
+    <!-- Pannello comandi (desktop fisso, mobile pannello a scomparsa) -->
+    <section class="controls-bar" id="controlsBar">
       <div class="controls-group-inline">
         <span class="controls-title">Pagine</span>
         <button id="prevPage" class="btn btn-ghost" type="button">&larr;</button>
@@ -51,15 +52,15 @@
       </div>
     </section>
 
+    <!-- Area libro -->
     <section class="book-area">
       <div class="book-page">
-        <!-- Questo è il contenitore del testo + quaderno -->
         <div class="page-inner" id="pageContainer">
           <div class="placeholder">
             <h1>Benvenuto 👋</h1>
             <p>Carica un file <strong>.epub</strong> dal pulsante in alto per iniziare a leggere.</p>
-            <p>Il paragrafo che stai leggendo verrà illuminato, con
-              <strong>4 parole alla volta</strong> evidenziate con un effetto evidenziatore pastello.</p>
+            <p>Il paragrafo che stai leggendo verrà illuminato,
+              con <strong>4 parole alla volta</strong> evidenziate con un effetto evidenziatore pastello.</p>
           </div>
         </div>
       </div>
@@ -68,9 +69,14 @@
         <span class="page-footer-text">Sfoglia come un libro, una pagina alla volta.</span>
       </div>
     </section>
+
+    <!-- Bottone flottante per aprire i comandi su mobile -->
+    <button class="fab-controls" id="fabControls" aria-label="Apri comandi">
+      ☰
+    </button>
   </main>
 
-  <!-- Libreria JSZip per leggere gli EPUB (che sono ZIP) -->
+  <!-- JSZip per aprire gli EPUB -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="script.js"></script>
 </body>
