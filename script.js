@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const speedRange = document.getElementById("speedRange");
   const speedValue = document.getElementById("speedValue");
 
+  // Slider velocità:
   // 0 => 5000 ms (5s lentissimo)
   // 100 => 200 ms (0,2s veloce)
   function sliderValueToMs(value) {
@@ -107,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       console.error(err);
       pageContainer.innerHTML = `
-        <div class="paper-lines"></div>
         <div class="page-inner">
           <div class="placeholder">
             <h1>Errore di lettura ⚠️</h1>
@@ -129,9 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentParagraphIndex = 0;
     state.currentWordIndex = 0;
 
-    // ripristina il contenuto del quaderno (con le righe già nel DOM)
     pageContainer.innerHTML = `
-      <div class="paper-lines"></div>
       <div class="page-inner">
         <div class="placeholder">
           <h1>Benvenuto 👋</h1>
@@ -263,11 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const paras = state.pages[pageIndex];
 
-    pageContainer.innerHTML = `
-      <div class="paper-lines"></div>
-      <div class="page-inner"></div>
-    `;
-
+    pageContainer.innerHTML = `<div class="page-inner"></div>`;
     const inner = pageContainer.querySelector(".page-inner");
 
     paras.forEach((text, idx) => {
@@ -422,105 +416,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const words = prevPara.querySelectorAll(".word");
       if (words.length) {
-        state.currentWordIndex = words.length - 1;
-        updateWordHighlight();
-      }
-    } else if (state.currentPageIndex - 1 >= 0) {
-      renderPage(state.currentPageIndex - 1);
-      const newParas = pageContainer.querySelectorAll(".book-paragraph");
-      if (newParas.length) {
-        const lastIdx = newParas.length - 1;
-        newParas.forEach((p) => p.classList.remove("active-paragraph"));
-        const lastPara = newParas[lastIdx];
-        lastPara.classList.add("active-paragraph");
-        state.currentParagraphIndex = lastIdx;
-
-        const words = lastPara.querySelectorAll(".word");
-        if (words.length) {
-          state.currentWordIndex = words.length - 1;
-          updateWordHighlight();
-        }
-      }
-    }
-  }
-
-  function advanceChunk() {
-    const data = getActiveParagraphData();
-    if (!data) return;
-    const { words, sentenceStarts, sentenceEnds } = data;
-    if (!words.length) return;
-
-    let idx = state.currentWordIndex;
-
-    if (idx >= words.length - 1) {
-      goToNextParagraphStart();
-      return;
-    }
-
-    let sentenceIndex = 0;
-    for (let i = 0; i < sentenceStarts.length; i++) {
-      if (idx >= sentenceStarts[i]) sentenceIndex = i;
-      else break;
-    }
-
-    const sentEnd = sentenceEnds[sentenceIndex];
-
-    let nextIdx = idx + 1;
-    if (nextIdx > sentEnd) {
-      if (sentenceIndex + 1 < sentenceStarts.length) {
-        nextIdx = sentenceStarts[sentenceIndex + 1];
-      } else {
-        goToNextParagraphStart();
-        return;
-      }
-    }
-
-    state.currentWordIndex = nextIdx;
-    updateWordHighlight();
-  }
-
-  function previousChunk() {
-    const data = getActiveParagraphData();
-    if (!data) return;
-    const { words } = data;
-    if (!words.length) return;
-
-    let idx = state.currentWordIndex;
-
-    if (idx <= 0) {
-      goToPrevParagraphEnd();
-      return;
-    }
-
-    state.currentWordIndex = idx - 1;
-    updateWordHighlight();
-  }
-
-  // --- Auto evidenziatore ---
-
-  function startAuto() {
-    stopAuto();
-    state.autoTimerId = setInterval(advanceChunk, state.autoSpeedMs);
-    toggleAutoBtn.textContent = "⏸";
-    toggleAutoBtn.classList.add("active");
-  }
-
-  function stopAuto() {
-    if (state.autoTimerId) {
-      clearInterval(state.autoTimerId);
-      state.autoTimerId = null;
-    }
-    toggleAutoBtn.textContent = "▶ Auto";
-    toggleAutoBtn.classList.remove("active");
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
-  // etichetta iniziale velocità
-  speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
-});
+        state.currentWordIndex =
