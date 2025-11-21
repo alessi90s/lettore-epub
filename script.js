@@ -13,18 +13,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const speedRange = document.getElementById("speedRange");
   const speedValue = document.getElementById("speedValue");
 
-  // mapping slider (0–100) -> millisecondi
-  // 0   => ~2000ms (2s, super lento)
-  // 100 => ~80ms (0,08s, turbo)
-  // non lineare per avere più scelta tra 0,2 e 0,7s
+  // 0 => 3000 ms (3s, lentissimo)
+  // 100 => 200 ms (0,2s, molto veloce)
+  // lineare, sx = lento, dx = veloce
   function sliderValueToMs(value) {
-    const minMs = 80;
-    const maxMs = 2000;
     const v = Math.max(0, Math.min(100, Number(value)));
-    const t = v / 100; // 0..1
-    const ratio = maxMs / minMs;
-    const ms = minMs * Math.pow(ratio, 1 - t); // t=0 => maxMs, t=1 => minMs
-    return Math.round(ms);
+    const slowMs = 3000; // sinistra
+    const fastMs = 200;  // destra
+    const t = v / 100;   // 0..1
+    return Math.round(slowMs - (slowMs - fastMs) * t);
   }
 
   const state = {
@@ -511,7 +508,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function escapeHtml(str) {
     return String(str)
       .replace(/&/g, "&amp;")
-      .replace(/<//g, "&lt;")
+      .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
   }
 
