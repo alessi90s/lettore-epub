@@ -11,7 +11,7 @@
   --accent: #6650ff;
   --accent-soft: rgba(102, 80, 255, 0.1);
 
-  /* evidenziatore: giallo pastello ben visibile */
+  /* evidenziatore: giallo pastello visibile */
   --highlight-word: #ffef7d;
 
   /* passo righe quaderno = line-height testo */
@@ -19,7 +19,6 @@
 
   --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
   --radius-lg: 20px;
-  --radius-md: 10px;
   --transition-fast: 0.18s ease-out;
 }
 
@@ -43,7 +42,7 @@ body {
 .top-bar {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 30;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06);
@@ -115,9 +114,10 @@ body {
   max-width: 960px;
   margin: 0 auto;
   padding: 0.6rem 1.2rem 1.4rem;
+  position: relative;
 }
 
-/* Barra controlli compatta sopra il quaderno */
+/* Barra controlli (desktop: sopra, mobile: pannello) */
 
 .controls-bar {
   display: flex;
@@ -126,6 +126,7 @@ body {
   justify-content: center;
   gap: 0.7rem;
   margin-bottom: 0.8rem;
+  z-index: 25;
 }
 
 .controls-group-inline {
@@ -133,7 +134,7 @@ body {
   align-items: center;
   gap: 0.4rem;
   font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   padding: 0.25rem 0.7rem;
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.04);
@@ -223,7 +224,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Quaderno: righe e margine rosso sullo stesso layer del testo */
+/* quaderno (righe + margine rosso) */
 .page-inner,
 #pageContainer {
   position: relative;
@@ -232,16 +233,13 @@ body {
   padding: calc(var(--line-step) * 1.1) 48px calc(var(--line-step) * 1.1) 70px;
 
   background-image:
-    /* margine rosso verticale */
     linear-gradient(to right, rgba(255, 120, 120, 0.65) 46px, transparent 46px),
-    /* righe orizzontali */
     repeating-linear-gradient(
       to bottom,
       #ffffff 0px,
       #ffffff calc(var(--line-step) - 1px),
       #f2f2f2 var(--line-step)
     );
-
   background-size: 100% auto;
   background-position: left calc(var(--line-step) * 0.2);
 }
@@ -279,11 +277,11 @@ body {
   font-size: 0.9rem;
 }
 
-/* Testo libro allineato alle righe */
+/* Testo libro */
 
 .book-paragraph {
   font-size: 1rem;
-  line-height: var(--line-step); /* stessa distanza delle righe */
+  line-height: var(--line-step);
   margin: 0.5rem 0;
   color: #262626;
   padding-left: 0.5rem;
@@ -337,7 +335,28 @@ body {
   border-radius: 999px;
 }
 
-/* Responsive */
+/* Bottone flottante comandi (mobile) */
+
+.fab-controls {
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 40;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #6650ff, #ff69b4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: none; /* visibile solo su mobile */
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- RESPONSIVE / MOBILE FULL SCREEN ---------- */
 
 @media (max-width: 900px) {
   .status {
@@ -353,25 +372,66 @@ body {
   }
 }
 
-@media (max-width: 600px) {
-  .top-inner {
-    flex-wrap: wrap;
+@media (max-width: 768px) {
+  .layout-center {
+    padding: 0.4rem 0.4rem 1rem;
   }
 
-  .controls-bar {
-    justify-content: flex-start;
-  }
-
-  .controls-group-inline {
-    width: 100%;
-  }
-
-  #speedRange {
-    flex: 1;
+  .book-page {
+    max-height: none;
+    height: calc(100dvh - 60px); /* quasi full screen sotto la top bar */
+    border-radius: 0;
   }
 
   .page-inner,
   #pageContainer {
     max-width: 100%;
+  }
+
+  /* comandi diventano pannello a scomparsa in basso */
+  .controls-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: -260px; /* nascosto */
+    margin-bottom: 0;
+    padding: 0.6rem 0.8rem 0.8rem;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.18);
+    border-radius: 14px 14px 0 0;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: stretch;
+    justify-content: flex-start;
+    transition: bottom 0.2s ease-out, opacity 0.2s ease-out;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 35;
+  }
+
+  .controls-bar.controls-open {
+    bottom: 0;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .controls-group-inline {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .controls-speed {
+    min-width: 0;
+  }
+
+  .fab-controls {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-footer-text {
+    font-size: 0.75rem;
+    padding-inline: 0.7rem;
   }
 }
