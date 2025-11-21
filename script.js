@@ -1,561 +1,437 @@
-// script.js
+// Lettore EPUB con evidenziatore a pastello
+// - usa JSZip per leggere il file .epub (che è uno zip)
+// - estrae i capitoli in ordine dal file OPF
+// - crea pagine "tipo libro" e evidenzia 4 parole alla volta
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Riferimenti agli elementi del DOM
-    const fileInput = document.getElementById('epubFile');
-    const readerDiv = document.getElementById('reader');
-    const readerContent = document.getElementById('reader-content');
+document.addEventListener("DOMContentLoaded", () => {
+  const fileInput = document.getElementById("fileInput");
+  const statusEl = document.getElementById("status");
+  const pageContainer = document.getElementById("pageContainer");
+  const prevPageBtn = document.getElementById("prevPage");
+  const nextPageBtn = document.getElementById("nextPage");
+  const pageIndicator = document.getElementById("pageIndicator");
+  const prevChunkBtn = document.getElementById("prevChunk");
+  const nextChunkBtn = document.getElementById("nextChunk");
+  const toggleAutoBtn = document.getElementById("toggleAuto");
+  const speedRange = document.getElementById("speedRange");
+  const speedValue = document.getElementById("speedValue");
 
-    // Controlli di riproduzione
-    const startButton = document.getElementById('start');
-    const pauseButton = document.getElementById('pause');
-    const stopButton = document.getElementById('stop');
+  const state = {
+    pages: [], // array di array: pages[pageIndex] = [paragrafo1, paragrafo2, ...]
+    currentPageIndex: 0,
+    currentParagraphIndex: 0,
+    currentWordIndex: 0,
+    chunkSize: 4, // quante parole alla volta
+    autoTimerId: null,
+    autoSpeedMs: Number(speedRange.value),
+    bookLoaded: false,
+  };
 
-    // Controlli di velocità
-    const increaseSpeedButton = document.getElementById('increaseSpeed');
-    const decreaseSpeedButton = document.getElementById('decreaseSpeed');
-    const speedDisplay = document.getElementById('speedDisplay');
+  // --- Event listeners ---
 
-    // Selezione del numero di parole evidenziate
-    const wordCountSelect = document.getElementById('wordCountSelect');
+  fileInput.addEventListener("change", handleFileChange);
 
-    // Selezione della dimensione del testo
-    const fontSizeSelect = document.getElementById('fontSizeSelect');
+  prevPageBtn.addEventListener("click", () => changePage(-1));
+  nextPageBtn.addEventListener("click", () => changePage(1));
 
-    // Selezione del font
-    const fontSelect = document.getElementById('fontSelect');
+  prevChunkBtn.addEventListener("click", () => {
+    stopAuto();
+    previousChunk();
+  });
 
-    // Selezione del colore dell'evidenziazione
-    const highlightColorSelect = document.getElementById('highlightColor');
+  nextChunkBtn.addEventListener("click", () => {
+    stopAuto();
+    advanceChunk();
+  });
 
-    // Selezione del tema
-    const themeSelect = document.getElementById('themeSelect');
+  toggleAutoBtn.addEventListener("click", () => {
+    if (!state.bookLoaded) return;
+    if (state.autoTimerId) {
+      stopAuto();
+    } else {
+      startAuto();
+    }
+  });
 
-    // Controlli per spostare il testo
-    const moveTextUpButton = document.getElementById('moveTextUp');
-    const moveTextDownButton = document.getElementById('moveTextDown');
+  speedRange.addEventListener("input", (e) => {
+    state.autoSpeedMs = Number(e.target.value);
+    speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(1) + " s";
+    if (state.autoTimerId) {
+      startAuto(); // restart per applicare la nuova velocità
+    }
+  });
 
-    // Spinner di caricamento
-    const spinner = document.getElementById('spinner');
+  // Shortcut: barra spaziatrice = play/pausa
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && !e.target.closest("input")) {
+      e.preventDefault();
+      if (!state.bookLoaded) return;
+      if (state.autoTimerId) {
+        stopAuto();
+      } else {
+        startAuto();
+      }
+    }
+  });
 
-    // Selettore dell'indice
-    const tocSelect = document.getElementById('tocSelect');
+  // --- Funzioni principali ---
 
-    // Pulsante per mostrare/nascondere i controlli su mobile
-    const toggleControlsButton = document.getElementById('toggle-controls');
+  async function handleFileChange(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
 
-    // Contenitore dei controlli
-    const controlsContainer = document.getElementById('controls-container');
+    resetState();
+    statusEl.textContent = `Caricamento di "${file.name}"...`;
 
-    // Variabili globali
-    let wordIndex = 0;
-    let intervalId;
-    let speed = 200; // Velocità in parole per minuto (WPM)
-    let isPaused = false;
-    let spans = []; // Array di span.word
-    let tocItems = []; // Array per l'indice del libro
-    let wordCount = 3; // Numero di parole da evidenziare
-    let fontSize = 18; // Dimensione del testo
-    let highlightColor = '#fff9c4'; // Colore di default per l'evidenziazione
-    let verticalOffset = 0; // Offset verticale per spostare il testo
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const paragraphs = await extractParagraphsFromEpub(arrayBuffer);
 
-    // Funzione per inizializzare i colori dell'evidenziazione
-    function initializeHighlightColors() {
-        const colors = [
-            { name: 'Giallo', value: '#fff9c4' },
-            { name: 'Arancione', value: '#ffcc80' },
-            { name: 'Rosa', value: '#f8bbd0' },
-            { name: 'Viola', value: '#e1bee7' },
-            { name: 'Blu', value: '#bbdefb' },
-            { name: 'Verde', value: '#c8e6c9' },
-            { name: 'Lime', value: '#f0f4c3' },
-            { name: 'Ambra', value: '#ffe082' },
-            { name: 'Marrone', value: '#d7ccc8' },
-            { name: 'Grigio', value: '#cfd8dc' },
-            { name: 'Ciano', value: '#b2ebf2' },
-            { name: 'Indaco', value: '#c5cae9' }
-        ];
+      if (!paragraphs.length) {
+        throw new Error("Nessun testo leggibile trovato nell'EPUB.");
+      }
 
-        colors.forEach(color => {
-            const option = document.createElement('option');
-            option.value = color.value;
-            option.textContent = color.name;
-            highlightColorSelect.appendChild(option);
-        });
+      buildPages(paragraphs);
+      renderPage(0);
 
-        // Imposta il colore di default
-        highlightColorSelect.value = highlightColor;
+      state.bookLoaded = true;
+      statusEl.textContent = `File caricato: ${file.name} • Paragrafi: ${paragraphs.length}`;
+    } catch (err) {
+      console.error(err);
+      pageContainer.innerHTML = `
+        <div class="placeholder">
+          <h1>Errore di lettura ⚠️</h1>
+          <p>Non sono riuscito a leggere questo EPUB.</p>
+          <p>Messaggio: <code>${escapeHtml(err.message || String(err))}</code></p>
+        </div>
+      `;
+      statusEl.textContent = "Errore: impossibile leggere il file. Forse non è un EPUB valido.";
+      state.bookLoaded = false;
+      stopAuto();
+    }
+  }
+
+  function resetState() {
+    stopAuto();
+    state.pages = [];
+    state.currentPageIndex = 0;
+    state.currentParagraphIndex = 0;
+    state.currentWordIndex = 0;
+    pageContainer.innerHTML = "";
+    pageIndicator.textContent = "Pagina 0 / 0";
+  }
+
+  // Estrae i paragrafi dal file EPUB usando JSZip + XML
+  async function extractParagraphsFromEpub(arrayBuffer) {
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    const containerFile = zip.file("META-INF/container.xml");
+    if (!containerFile) {
+      throw new Error("File META-INF/container.xml non trovato (EPUB non valido?).");
     }
 
-    // Funzione per inizializzare le opzioni della dimensione del testo
-    function initializeFontSizeOptions() {
-        for (let i = 8; i <= 32; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = i;
-            if (i === fontSize) {
-                option.selected = true;
-            }
-            fontSizeSelect.appendChild(option);
+    const parser = new DOMParser();
+    const containerText = await containerFile.async("string");
+    const containerDoc = parser.parseFromString(containerText, "application/xml");
+
+    const rootfileEl = containerDoc.querySelector("rootfile");
+    if (!rootfileEl) {
+      throw new Error("rootfile non trovato nel container.xml.");
+    }
+
+    const opfPath = rootfileEl.getAttribute("full-path");
+    if (!opfPath) {
+      throw new Error("Percorso OPF non valido.");
+    }
+
+    const opfFile = zip.file(opfPath);
+    if (!opfFile) {
+      throw new Error(`File OPF non trovato: ${opfPath}`);
+    }
+
+    const opfText = await opfFile.async("string");
+    const opfDoc = parser.parseFromString(opfText, "application/xml");
+
+    // Manifest: id -> href
+    const manifestItems = {};
+    opfDoc.querySelectorAll("manifest > item").forEach((item) => {
+      const id = item.getAttribute("id");
+      const href = item.getAttribute("href");
+      const mediaType = item.getAttribute("media-type") || "";
+      if (id && href && mediaType.includes("html")) {
+        manifestItems[id] = href;
+      }
+    });
+
+    // Spine: ordine di lettura
+    const spineHrefs = [];
+    opfDoc.querySelectorAll("spine > itemref").forEach((ref) => {
+      const idref = ref.getAttribute("idref");
+      if (idref && manifestItems[idref]) {
+        spineHrefs.push(manifestItems[idref]);
+      }
+    });
+
+    if (!spineHrefs.length) {
+      throw new Error("Spine vuota: nessun capitolo da leggere.");
+    }
+
+    const paragraphs = [];
+    for (const href of spineHrefs) {
+      const fullPath = resolveItemPath(opfPath, href);
+      const chapterFile = zip.file(fullPath);
+      if (!chapterFile) {
+        // Capitolo non trovato, continuo
+        continue;
+      }
+
+      const xhtml = await chapterFile.async("string");
+      const doc = parser.parseFromString(xhtml, "application/xhtml+xml");
+      const body = doc.querySelector("body");
+      if (!body) continue;
+
+      // Prendo blocchi di testo tipici
+      const blocks = body.querySelectorAll("p, div, li, h1, h2, h3, h4");
+      blocks.forEach((node) => {
+        const text = (node.textContent || "").replace(/\s+/g, " ").trim();
+        if (text.length > 30) {
+          // filtro via righe troppo corte tipo titoletti/spazi
+          paragraphs.push(text);
         }
+      });
     }
 
-    // Chiamate alle funzioni di inizializzazione
-    initializeHighlightColors();
-    initializeFontSizeOptions();
+    return paragraphs;
+  }
 
-    // Aggiorna il colore dell'evidenziazione nel CSS
-    function updateHighlightColor() {
-        const style = document.documentElement.style;
-        style.setProperty('--highlight-color', highlightColorSelect.value);
+  // Risolve percorsi come href relativi rispetto al file OPF
+  function resolveItemPath(opfPath, href) {
+    const baseDir = opfPath.includes("/")
+      ? opfPath.slice(0, opfPath.lastIndexOf("/") + 1)
+      : "";
+    const fakeBase = "http://example.com/" + baseDir;
+    const url = new URL(href, fakeBase);
+    // tolgo lo slash iniziale
+    return url.pathname.replace(/^\/+/, "");
+  }
+
+  // Costruisce le "pagine" del libro
+  function buildPages(paragraphs) {
+    const CHARS_PER_PAGE = 1500; // puoi cambiare per fare pagine più lunghe/corte
+    const pages = [];
+    let currentPage = [];
+    let currentCount = 0;
+
+    paragraphs.forEach((pText) => {
+      const len = pText.length;
+      if (currentPage.length && currentCount + len > CHARS_PER_PAGE) {
+        pages.push(currentPage);
+        currentPage = [];
+        currentCount = 0;
+      }
+      currentPage.push(pText);
+      currentCount += len;
+    });
+
+    if (currentPage.length) {
+      pages.push(currentPage);
     }
 
-    // Aggiorna il tema
-    function updateTheme() {
-        document.body.className = themeSelect.value;
+    state.pages = pages;
+  }
+
+  // Disegna una pagina nel DOM
+  function renderPage(pageIndex) {
+    if (!state.pages.length) return;
+    if (pageIndex < 0 || pageIndex >= state.pages.length) return;
+
+    state.currentPageIndex = pageIndex;
+    state.currentParagraphIndex = 0;
+    state.currentWordIndex = 0;
+
+    pageContainer.innerHTML = "";
+
+    const inner = document.createElement("div");
+    inner.className = "page-inner";
+
+    const paras = state.pages[pageIndex];
+    paras.forEach((text, idx) => {
+      const p = document.createElement("p");
+      p.className = "book-paragraph";
+      p.dataset.paragraphIndex = String(idx);
+      wrapWordsInParagraph(p, text);
+
+      p.addEventListener("click", () => {
+        stopAuto();
+        setActiveParagraph(idx);
+      });
+
+      inner.appendChild(p);
+    });
+
+    pageContainer.appendChild(inner);
+    setActiveParagraph(0);
+    updatePageIndicator();
+  }
+
+  function updatePageIndicator() {
+    const total = state.pages.length;
+    const current = total ? state.currentPageIndex + 1 : 0;
+    pageIndicator.textContent = `Pagina ${current} / ${total}`;
+  }
+
+  function changePage(direction) {
+    if (!state.pages.length) return;
+    const newIndex = state.currentPageIndex + direction;
+    if (newIndex < 0 || newIndex >= state.pages.length) return;
+
+    stopAuto();
+    renderPage(newIndex);
+  }
+
+  // Avvolge le parole in span.word per poterle evidenziare
+  function wrapWordsInParagraph(pEl, text) {
+    const words = text.split(/\s+/).filter((w) => w.length > 0);
+    pEl.textContent = "";
+    words.forEach((word, index) => {
+      const span = document.createElement("span");
+      span.className = "word";
+      // aggiungo uno spazio dopo ogni parola tranne l'ultima
+      span.textContent = index < words.length - 1 ? word + " " : word;
+      pEl.appendChild(span);
+    });
+  }
+
+  // Seleziona il paragrafo attivo
+  function setActiveParagraph(paragraphIndex) {
+    const paras = pageContainer.querySelectorAll(".book-paragraph");
+    if (!paras.length) return;
+
+    const clampedIndex = Math.max(0, Math.min(paragraphIndex, paras.length - 1));
+
+    paras.forEach((p) => p.classList.remove("active-paragraph"));
+    const active = paras[clampedIndex];
+    if (!active) return;
+
+    active.classList.add("active-paragraph");
+    state.currentParagraphIndex = clampedIndex;
+    state.currentWordIndex = 0;
+    updateWordHighlight();
+
+    // centro il paragrafo attivo nella pagina
+    active.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // Aggiorna l'evidenziatore sulle parole
+  function updateWordHighlight() {
+    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
+    if (!active) return;
+
+    const words = active.querySelectorAll(".word");
+    words.forEach((w) => w.classList.remove("word-highlight"));
+
+    if (!words.length) return;
+
+    const start = Math.max(0, Math.min(state.currentWordIndex, words.length - 1));
+    const end = Math.min(start + state.chunkSize, words.length);
+
+    for (let i = start; i < end; i++) {
+      words[i].classList.add("word-highlight");
     }
+  }
 
-    // Aggiorna la dimensione del testo
-    function updateFontSize() {
-        fontSize = parseInt(fontSizeSelect.value);
-        readerContent.style.fontSize = `${fontSize}px`;
-        // Calcola l'altezza della linea basata sulla dimensione del testo
-        const lineHeightRatio = 1.6; // Rapporto tra altezza della linea e dimensione del testo
-        const lineHeightPx = fontSize * lineHeightRatio;
-        readerContent.style.lineHeight = `${lineHeightPx}px`;
-        // Aggiorna la variabile CSS per l'altezza della linea
-        readerDiv.style.setProperty('--line-height', `${lineHeightPx}px`);
+  // Va avanti di un "blocco" di parole
+  function advanceChunk() {
+    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
+    if (!active) return;
+
+    const words = active.querySelectorAll(".word");
+    if (!words.length) return;
+
+    if (state.currentWordIndex + state.chunkSize < words.length) {
+      state.currentWordIndex += state.chunkSize;
+      updateWordHighlight();
+    } else {
+      // fine paragrafo -> passo al successivo
+      const paras = pageContainer.querySelectorAll(".book-paragraph");
+      if (state.currentParagraphIndex + 1 < paras.length) {
+        setActiveParagraph(state.currentParagraphIndex + 1);
+      } else if (state.currentPageIndex + 1 < state.pages.length) {
+        // fine pagina -> pagina successiva
+        renderPage(state.currentPageIndex + 1);
+      } else {
+        // fine libro
+        stopAuto();
+      }
     }
+  }
 
-    // Aggiorna il font
-    function updateFont() {
-        readerContent.style.fontFamily = fontSelect.value;
-    }
+  // Va indietro di un blocco di parole
+  function previousChunk() {
+    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
+    if (!active) return;
 
-    // Mostra lo spinner di caricamento
-    function showSpinner() {
-        spinner.style.display = 'block';
-    }
+    const words = active.querySelectorAll(".word");
+    if (!words.length) return;
 
-    // Nascondi lo spinner di caricamento
-    function hideSpinner() {
-        spinner.style.display = 'none';
-    }
-
-    // Aggiorna la visualizzazione della velocità
-    function updateSpeedDisplay() {
-        speedDisplay.textContent = speed;
-    }
-
-    // Aggiornamenti iniziali
-    updateHighlightColor();
-    updateTheme();
-    updateFontSize();
-    updateFont();
-    updateSpeedDisplay();
-
-    // Event listener per aumentare la velocità
-    increaseSpeedButton.addEventListener('click', () => {
-        if (speed < 1000) { // Limite superiore
-            speed += 10;
-            updateSpeedDisplay();
-            if (!isPaused) {
-                restartHighlighting();
-            }
+    if (state.currentWordIndex - state.chunkSize >= 0) {
+      state.currentWordIndex -= state.chunkSize;
+      updateWordHighlight();
+    } else {
+      // siamo all'inizio del paragrafo -> passo al precedente
+      const paras = pageContainer.querySelectorAll(".book-paragraph");
+      if (state.currentParagraphIndex - 1 >= 0) {
+        setActiveParagraph(state.currentParagraphIndex - 1);
+        const newActive = pageContainer.querySelector(".book-paragraph.active-paragraph");
+        const newWords = newActive ? newActive.querySelectorAll(".word") : [];
+        if (newWords.length) {
+          state.currentWordIndex = Math.max(0, newWords.length - state.chunkSize);
+          updateWordHighlight();
         }
-    });
-
-    // Event listener per diminuire la velocità
-    decreaseSpeedButton.addEventListener('click', () => {
-        if (speed > 10) { // Limite inferiore
-            speed -= 10;
-            updateSpeedDisplay();
-            if (!isPaused) {
-                restartHighlighting();
-            }
+      } else if (state.currentPageIndex - 1 >= 0) {
+        // vai alla pagina precedente, ultimo paragrafo
+        renderPage(state.currentPageIndex - 1);
+        const parasNew = pageContainer.querySelectorAll(".book-paragraph");
+        if (parasNew.length) {
+          setActiveParagraph(parasNew.length - 1);
+          const newActive = pageContainer.querySelector(".book-paragraph.active-paragraph");
+          const newWords = newActive ? newActive.querySelectorAll(".word") : [];
+          if (newWords.length) {
+            state.currentWordIndex = Math.max(0, newWords.length - state.chunkSize);
+            updateWordHighlight();
+          }
         }
-    });
-
-    // Event listener per cambiare il numero di parole
-    wordCountSelect.addEventListener('change', () => {
-        wordCount = parseInt(wordCountSelect.value);
-    });
-
-    // Event listener per spostare il testo verso l'alto
-    moveTextUpButton.addEventListener('click', () => {
-        verticalOffset -= 5; // Modifica l'offset a piacere (5px per click)
-        readerContent.style.transform = `translateY(${verticalOffset}px)`;
-    });
-
-    // Event listener per spostare il testo verso il basso
-    moveTextDownButton.addEventListener('click', () => {
-        verticalOffset += 5; // Modifica l'offset a piacere (5px per click)
-        readerContent.style.transform = `translateY(${verticalOffset}px)`;
-    });
-
-    // Event listener per cambiare la dimensione del testo
-    fontSizeSelect.addEventListener('change', () => {
-        updateFontSize();
-    });
-
-    // Event listener per cambiare il font
-    fontSelect.addEventListener('change', () => {
-        updateFont();
-    });
-
-    // Event listener per cambiare il colore dell'evidenziazione
-    highlightColorSelect.addEventListener('change', () => {
-        highlightColor = highlightColorSelect.value;
-        updateHighlightColor();
-    });
-
-    // Event listener per cambiare il tema
-    themeSelect.addEventListener('change', () => {
-        updateTheme();
-    });
-
-    // Pulsante per mostrare/nascondere i controlli su mobile
-    toggleControlsButton.addEventListener('click', () => {
-        controlsContainer.classList.toggle('active');
-    });
-
-    // Evento per il caricamento del file EPUB
-    fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (file && file.name.endsWith('.epub')) {
-            showSpinner();
-            try {
-                console.log('Inizio caricamento EPUB:', file.name);
-                const arrayBuffer = await file.arrayBuffer();
-                const zip = await JSZip.loadAsync(arrayBuffer);
-                console.log('ZIP caricato con successo');
-                const { content, toc } = await extractContent(zip);
-                console.log('Contenuto estratto');
-
-                readerContent.innerHTML = content;
-
-                // Aggiorna l'array globale di spans
-                spans = readerContent.querySelectorAll('span.word');
-
-                // Aggiungi event listener per permettere di iniziare la lettura da un punto specifico
-                spans.forEach((span, index) => {
-                    span.addEventListener('click', () => {
-                        wordIndex = index;
-                        clearHighlights();
-                        span.classList.add('highlight');
-                        // Scrolla verso la parola selezionata
-                        span.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        // Avvia la lettura da questo punto
-                        if (!isPaused) {
-                            restartHighlighting();
-                        }
-                    });
-                });
-
-                // Popola il menu a tendina con l'indice
-                populateTOC(toc);
-
-                hideSpinner();
-                console.log('EPUB caricato e processato con successo');
-            } catch (error) {
-                console.error('Errore nel caricamento dell\'EPUB:', error);
-                alert('Errore nel caricamento dell\'EPUB. Controlla la console per maggiori dettagli.');
-                hideSpinner();
-            }
-        } else {
-            alert('Per favore, carica un file EPUB valido.');
-        }
-    });
-
-    // Evento per iniziare la lettura
-    startButton.addEventListener('click', () => {
-        if (spans.length === 0) {
-            alert('Per favore, carica un file EPUB prima.');
-            return;
-        }
-
-        if (!isPaused) {
-            wordIndex = 0;
-        }
-
-        isPaused = false;
-        startHighlighting(wordIndex);
-    });
-
-    // Evento per mettere in pausa la lettura
-    pauseButton.addEventListener('click', () => {
-        isPaused = true;
-        clearInterval(intervalId);
-    });
-
-    // Evento per fermare la lettura
-    stopButton.addEventListener('click', () => {
-        clearInterval(intervalId);
-        clearHighlights();
-        wordIndex = 0;
-        isPaused = false;
-    });
-
-    // Evento per la selezione di un capitolo dal menu a tendina
-    tocSelect.addEventListener('change', () => {
-        const selectedWordIndex = parseInt(tocSelect.value);
-        if (!isNaN(selectedWordIndex)) {
-            wordIndex = selectedWordIndex;
-            clearHighlights();
-            const span = spans[wordIndex];
-            if (span) {
-                span.classList.add('highlight');
-                span.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                if (!isPaused) {
-                    restartHighlighting();
-                }
-            }
-        }
-    });
-
-    // Funzione per iniziare la sottolineatura delle parole
-    function startHighlighting(startIndex) {
-        const interval = (60000 * wordCount) / speed; // Calcola l'intervallo in millisecondi
-        console.log(`Inizio evidenziazione a indice ${startIndex} con intervallo ${interval}ms`);
-
-        if (intervalId) {
-            clearInterval(intervalId);
-        }
-
-        intervalId = setInterval(() => {
-            if (isPaused) {
-                clearInterval(intervalId);
-                return;
-            }
-            // Rimuove l'highlight delle parole precedenti
-            spans.forEach(span => span.classList.remove('highlight'));
-
-            if (wordIndex < spans.length) {
-                // Evidenzia le prossime N parole
-                for (let i = 0; i < wordCount; i++) {
-                    if (spans[wordIndex + i]) {
-                        spans[wordIndex + i].classList.add('highlight');
-                    }
-                }
-                // Scrolla verso la prima parola evidenziata
-                spans[wordIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                wordIndex += wordCount; // Incrementa l'indice di N parole
-            } else {
-                clearInterval(intervalId);
-                alert('Lettura completata!');
-                console.log('Lettura completata');
-            }
-        }, interval);
+      }
     }
+  }
 
-    // Funzione per riavviare la lettura mantenendo la posizione attuale
-    function restartHighlighting() {
-        clearInterval(intervalId);
-        startHighlighting(wordIndex);
+  // Gestione auto evidenziatore
+
+  function startAuto() {
+    stopAuto();
+    state.autoTimerId = setInterval(advanceChunk, state.autoSpeedMs);
+    toggleAutoBtn.textContent = "⏸ Pausa evidenziatore";
+    toggleAutoBtn.classList.add("active");
+  }
+
+  function stopAuto() {
+    if (state.autoTimerId) {
+      clearInterval(state.autoTimerId);
+      state.autoTimerId = null;
     }
+    toggleAutoBtn.textContent = "▶ Auto evidenziatore";
+    toggleAutoBtn.classList.remove("active");
+  }
 
-    // Funzione per estrarre il contenuto e l'indice dall'EPUB
-    async function extractContent(zip) {
-        // Trova il percorso del file OPF (contenente il manifesto)
-        const containerXML = await zip.file('META-INF/container.xml').async('string');
-        const parser = new DOMParser();
-        const containerDoc = parser.parseFromString(containerXML, 'text/xml');
-        const rootfilePath = containerDoc.querySelector('rootfile').getAttribute('full-path');
-        console.log('Percorso del rootfile:', rootfilePath);
+  // Utils
 
-        // Carica il file OPF
-        const contentOPF = await zip.file(rootfilePath).async('string');
-        const contentDoc = parser.parseFromString(contentOPF, 'text/xml');
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
 
-        // Estrae i riferimenti ai file xhtml
-        const spineItems = contentDoc.querySelectorAll('spine itemref');
-        const manifestItems = contentDoc.querySelectorAll('manifest item');
-
-        let fullText = '';
-        let cumulativeWordCount = 0;
-        tocItems = [];
-
-        for (let itemRef of spineItems) {
-            const idref = itemRef.getAttribute('idref');
-            const item = Array.from(manifestItems).find(i => i.getAttribute('id') === idref);
-
-            if (item) {
-                const href = item.getAttribute('href');
-                const mediaType = item.getAttribute('media-type');
-                const filePath = resolvePath(rootfilePath, href);
-                console.log(`Processando file: ${filePath}, media-type: ${mediaType}`);
-
-                if (mediaType.includes('application/xhtml+xml') || mediaType.includes('text/html')) {
-                    const fileContent = await zip.file(filePath).async('string');
-                    const fileDoc = parser.parseFromString(fileContent, 'application/xhtml+xml');
-
-                    // Gestisci le immagini
-                    await handleImages(zip, fileDoc, filePath);
-
-                    // Avvolgi le parole in span e inserisci line breaks dopo i punti
-                    const processedHTML = await wrapWordsInSpans(fileDoc.body.innerHTML);
-                    console.log(`Processato HTML per file: ${filePath}`);
-
-                    // Mappa il capitolo all'indice delle parole
-                    const wordCountBefore = cumulativeWordCount;
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = processedHTML;
-                    const tempSpans = tempDiv.querySelectorAll('span.word');
-                    cumulativeWordCount += tempSpans.length;
-
-                    // Estrai i titoli dei capitoli
-                    const chapterTitles = extractChapterTitles(fileDoc);
-                    if (chapterTitles.length > 0) {
-                        chapterTitles.forEach(title => {
-                            tocItems.push({
-                                title: title,
-                                wordIndex: wordCountBefore
-                            });
-                            console.log(`Aggiunto capitolo: ${title} a indice ${wordCountBefore}`);
-                        });
-                    }
-
-                    fullText += processedHTML;
-                }
-            }
-        }
-
-        return { content: fullText, toc: tocItems };
-    }
-
-    // Funzione per estrarre i titoli dei capitoli
-    function extractChapterTitles(doc) {
-        const titles = [];
-        const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
-        headings.forEach(heading => {
-            const titleText = heading.textContent.trim();
-            if (titleText) {
-                titles.push(titleText);
-            }
-        });
-        return titles;
-    }
-
-    // Funzione per popolare il menu a tendina dell'indice
-    function populateTOC(tocItems) {
-        tocSelect.innerHTML = '<option value="">Indice</option>';
-        tocItems.forEach((tocItem) => {
-            const option = document.createElement('option');
-            option.value = tocItem.wordIndex;
-            option.textContent = tocItem.title;
-            tocSelect.appendChild(option);
-        });
-        console.log('Indice popolato:', tocItems.length, 'voci');
-    }
-
-    // Funzione per gestire le immagini all'interno dei capitoli
-    async function handleImages(zip, doc, basePath) {
-        const images = doc.querySelectorAll('img');
-        for (let img of images) {
-            const src = img.getAttribute('src');
-            if (src) {
-                const imagePath = resolvePath(basePath, src);
-                const imageFile = zip.file(imagePath);
-                if (imageFile) {
-                    try {
-                        const blob = await imageFile.async('blob');
-                        const url = URL.createObjectURL(blob);
-                        img.setAttribute('src', url);
-                        console.log('Immagine caricata:', imagePath);
-                    } catch (error) {
-                        console.warn('Errore nel caricamento dell\'immagine:', imagePath, error);
-                    }
-                } else {
-                    console.warn('Immagine non trovata:', imagePath);
-                }
-            }
-        }
-    }
-
-    // Funzione per risolvere il percorso del file
-    function resolvePath(basePath, relativePath) {
-        const baseParts = basePath.split('/');
-        baseParts.pop(); // Rimuove il nome del file
-        const relativeParts = relativePath.split('/');
-
-        for (let part of relativeParts) {
-            if (part === '..') {
-                baseParts.pop();
-            } else if (part !== '.') {
-                baseParts.push(part);
-            }
-        }
-
-        return baseParts.join('/');
-    }
-
-    // Funzione per avvolgere ogni parola in uno span e inserire line breaks dopo i punti
-    async function wrapWordsInSpans(htmlContent) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlContent, 'text/html');
-
-        // Funzione ricorsiva per attraversare tutti i nodi di testo
-        function traverse(node) {
-            if (node.nodeType === Node.TEXT_NODE) {
-                const parentTag = node.parentNode.tagName.toLowerCase();
-                // Evita di avvolgere parole all'interno di tag che non dovrebbero essere modificati
-                const nonProcessTags = ['script', 'style', 'a', 'code', 'pre', 'img', 'svg'];
-                if (nonProcessTags.includes(parentTag)) {
-                    return;
-                }
-
-                // Inserisci un'interruzione di linea dopo ogni punto seguito da uno spazio
-                const textContent = node.textContent.replace(/\. /g, '.\n');
-
-                const words = textContent.split(/(\s+)/); // Mantiene gli spazi e le nuove linee
-
-                const fragment = document.createDocumentFragment();
-
-                words.forEach(word => {
-                    if (word === '\n') {
-                        fragment.appendChild(document.createElement('br'));
-                    } else if (/\s+/.test(word)) {
-                        fragment.appendChild(document.createTextNode(word));
-                    } else {
-                        const span = document.createElement('span');
-                        span.textContent = word;
-                        span.classList.add('word');
-                        fragment.appendChild(span);
-                    }
-                });
-
-                node.parentNode.replaceChild(fragment, node);
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // Evita di attraversare i nodi che non devono essere modificati
-                const nonProcessTags = ['script', 'style', 'a', 'code', 'pre', 'img', 'svg'];
-                const tagName = node.tagName.toLowerCase();
-                if (nonProcessTags.includes(tagName)) {
-                    return;
-                }
-
-                Array.from(node.childNodes).forEach(child => traverse(child));
-            }
-        }
-
-        traverse(doc.body);
-
-        return doc.body.innerHTML;
-    }
-
-    // Funzione per pulire tutti gli highlight
-    function clearHighlights() {
-        spans.forEach(span => span.classList.remove('highlight'));
-    }
-
-    // Imposta il colore dell'evidenziazione tramite CSS Custom Property
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .word.highlight {
-            background-color: var(--highlight-color) !important;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // Funzione per inserire interruzioni di linea dopo i punti già gestita in wrapWordsInSpans()
-
+  // inizializzo la label velocità
+  speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(1) + " s";
 });
