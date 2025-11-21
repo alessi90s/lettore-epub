@@ -435,3 +435,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // inizializzo la label velocità
   speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(1) + " s";
 });
+
