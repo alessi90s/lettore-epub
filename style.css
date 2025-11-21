@@ -12,9 +12,8 @@
   --accent: #6650ff;
   --accent-soft: rgba(102, 80, 255, 0.1);
 
-  /* evidenziatore pastello giallo */
-  --highlight-word-start: #fff9a8;
-  --highlight-word-end: #ffe28c;
+  /* evidenziatore: UN SOLO GIALLO PASTELLO */
+  --highlight-word: #fff9a8;
 
   --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
   --radius-lg: 18px;
@@ -306,30 +305,28 @@ body {
 
 /* Testo libro */
 
+/* padding + bordo sempre presenti (trasparente),
+   così quando il paragrafo diventa attivo NON SI MUOVE */
 .book-paragraph {
   line-height: 1.7;
   margin: 0.85rem 0;
   font-size: 1rem;
   color: #262626;
-  padding: 0;                 /* NIENTE BOX */
-  border-radius: 0;           /* NIENTE CARD */
+  padding-left: 0.5rem;
+  border-left: 3px solid transparent;
   cursor: pointer;
   background: transparent;
   box-shadow: none;
-  transition: color var(--transition-fast);
+  transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .book-paragraph:hover {
-  /* al massimo leggero cambio colore testo, ma niente sfondo */
   color: #111;
 }
 
-/* Paragrafo attivo: solo un piccolo bordo sinistro, niente sfondo */
+/* paragrafo attivo: cambia SOLO il colore del bordo, non la dimensione */
 .book-paragraph.active-paragraph {
-  background: transparent;
-  box-shadow: none;
-  padding-left: 0.5rem;
-  border-left: 3px solid rgba(255, 200, 120, 0.8);
+  border-left-color: rgba(255, 200, 120, 0.8);
 }
 
 /* Parole & evidenziatore pastello */
@@ -340,16 +337,10 @@ body {
   word-wrap: break-word;
 }
 
-/* SOLO IL PASTELLO GIALLO, BEN VISIBILE SUL BIANCO */
+/* evidenziatore = SOLO giallo pastello, niente gradient, niente padding extra */
 .word-highlight {
-  background: linear-gradient(
-    120deg,
-    var(--highlight-word-start),
-    var(--highlight-word-end)
-  );
-  border-radius: 0.18em;
-  padding: 0 0.04em;
-  box-shadow: 0 0 0.45em rgba(255, 214, 130, 0.8);
+  background-color: var(--highlight-word);
+  border-radius: 0.12em;
 }
 
 /* Indicatore pagina */
