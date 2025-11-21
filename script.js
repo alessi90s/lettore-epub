@@ -26,6 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const fabControls = document.getElementById("fabControls");
   const autoScrollToggle = document.getElementById("autoScrollToggle");
 
+  if (!pageContainer || !pageIndicator || !statusEl) {
+    console.error("Elementi base mancanti, controlla index.html");
+    return;
+  }
+
   // Slider virtuale: 0 => 5 s, 100 => 0,2 s
   const SPEED_MIN = 0;
   const SPEED_MAX = 100;
@@ -55,9 +60,10 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function updateSpeedLabel() {
-    speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
+    if (speedValue) {
+      speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
+    }
   }
-
   updateSpeedLabel();
 
   /* -------- EVENTI UI -------- */
@@ -66,58 +72,70 @@ document.addEventListener("DOMContentLoaded", () => {
     fileInput.addEventListener("change", handleFileChange);
   }
 
-  prevPageBtn.addEventListener("click", () => {
-    changePage(-1);
-  });
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener("click", () => {
+      changePage(-1);
+    });
+  }
 
-  nextPageBtn.addEventListener("click", () => {
-    changePage(1);
-  });
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener("click", () => {
+      changePage(1);
+    });
+  }
 
-  prevChunkBtn.addEventListener("click", () => {
-    stopAuto();
-    previousChunk();
-  });
-
-  nextChunkBtn.addEventListener("click", () => {
-    stopAuto();
-    advanceChunk();
-  });
-
-  toggleAutoBtn.addEventListener("click", () => {
-    if (!state.bookLoaded) return;
-    if (state.autoTimerId) {
+  if (prevChunkBtn) {
+    prevChunkBtn.addEventListener("click", () => {
       stopAuto();
-    } else {
-      startAuto();
-    }
-  });
+      previousChunk();
+    });
+  }
 
-  speedDownBtn.addEventListener("click", () => {
-    state.speedSliderValue = Math.max(SPEED_MIN, state.speedSliderValue - SPEED_STEP);
-    state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
-    updateSpeedLabel();
-    if (state.autoTimerId) {
-      startAuto();
-    }
-  });
+  if (nextChunkBtn) {
+    nextChunkBtn.addEventListener("click", () => {
+      stopAuto();
+      advanceChunk();
+    });
+  }
 
-  speedUpBtn.addEventListener("click", () => {
-    state.speedSliderValue = Math.min(SPEED_MAX, state.speedSliderValue + SPEED_STEP);
-    state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
-    updateSpeedLabel();
-    if (state.autoTimerId) {
-      startAuto();
-    }
-  });
+  if (toggleAutoBtn) {
+    toggleAutoBtn.addEventListener("click", () => {
+      if (!state.bookLoaded) return;
+      if (state.autoTimerId) {
+        stopAuto();
+      } else {
+        startAuto();
+      }
+    });
+  }
 
-  // Toggle auto-scroll
-  autoScrollToggle.addEventListener("change", (e) => {
-    state.autoScrollEnabled = !!e.target.checked;
-  });
+  if (speedDownBtn) {
+    speedDownBtn.addEventListener("click", () => {
+      state.speedSliderValue = Math.max(SPEED_MIN, state.speedSliderValue - SPEED_STEP);
+      state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
+      updateSpeedLabel();
+      if (state.autoTimerId) startAuto();
+    });
+  }
+
+  if (speedUpBtn) {
+    speedUpBtn.addEventListener("click", () => {
+      state.speedSliderValue = Math.min(SPEED_MAX, state.speedSliderValue + SPEED_STEP);
+      state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
+      updateSpeedLabel();
+      if (state.autoTimerId) startAuto();
+    });
+  }
+
+  if (autoScrollToggle) {
+    autoScrollToggle.checked = true;
+    autoScrollToggle.addEventListener("change", (e) => {
+      state.autoScrollEnabled = !!e.target.checked;
+    });
+  }
 
   // FAB per aprire/chiudere i comandi su mobile
-  if (fabControls) {
+  if (fabControls && controlsBar) {
     fabControls.addEventListener("click", () => {
       const isOpen = controlsBar.classList.toggle("controls-open");
       fabControls.textContent = isOpen ? "✕" : "☰";
@@ -128,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (e) => {
     if (e.code === "Space" && !e.target.closest("input")) {
       e.preventDefault();
-      if (!state.bookLoaded) return;
+      if (!state.bookLoaded || !toggleAutoBtn) return;
       if (state.autoTimerId) {
         stopAuto();
       } else {
@@ -165,13 +183,11 @@ document.addEventListener("DOMContentLoaded", () => {
       state.bookKey = fileKey;
 
       let resume = null;
-      const savedRaw = localStorage.getItem(fileKey);
-      if (savedRaw) {
-        try {
-          resume = JSON.parse(savedRaw);
-        } catch {
-          resume = null;
-        }
+      try {
+        const savedRaw = localStorage.getItem(fileKey);
+        if (savedRaw) resume = JSON.parse(savedRaw);
+      } catch {
+        resume = null;
       }
 
       if (resume && typeof resume.pageIndex === "number") {
@@ -318,11 +334,8 @@ document.addEventListener("DOMContentLoaded", () => {
     pageContainer.appendChild(fragment);
 
     if (restore && typeof restore.paragraphIndex === "number") {
-      const safePara = clamp(
-        restore.paragraphIndex,
-        0,
-        pageContainer.querySelectorAll(".book-paragraph").length - 1
-      );
+      const totalParas = pageContainer.querySelectorAll(".book-paragraph").length;
+      const safePara = clamp(restore.paragraphIndex, 0, totalParas - 1);
       setActiveParagraph(safePara);
       state.currentWordIndex = Math.max(0, restore.wordIndex || 0);
       updateWordHighlight();
@@ -333,7 +346,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updatePageIndicator();
-    // NOTA: NON chiudiamo più il menù quando cambi pagina
   }
 
   function updatePageIndicator() {
@@ -369,8 +381,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const activeWord = pageContainer.querySelector(
       ".book-paragraph.active-paragraph .word-highlight"
     );
-    const target = activeWord ||
-      pageContainer.querySelector(".book-paragraph.active-paragraph");
+    const target =
+      activeWord || pageContainer.querySelector(".book-paragraph.active-paragraph");
 
     if (!target) return;
 
@@ -467,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     scrollToCurrentHighlight();
-    saveProgress(); // ogni volta che cambia evidenziazione, salvo
+    saveProgress();
   }
 
   function goToNextParagraphStart() {
@@ -571,8 +583,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function startAuto() {
     stopAuto();
     state.autoTimerId = setInterval(advanceChunk, state.autoSpeedMs);
-    toggleAutoBtn.textContent = "⏸";
-    toggleAutoBtn.classList.add("active");
+    if (toggleAutoBtn) {
+      toggleAutoBtn.textContent = "⏸";
+      toggleAutoBtn.classList.add("active");
+    }
   }
 
   function stopAuto() {
@@ -580,8 +594,10 @@ document.addEventListener("DOMContentLoaded", () => {
       clearInterval(state.autoTimerId);
       state.autoTimerId = null;
     }
-    toggleAutoBtn.textContent = "▶ Auto";
-    toggleAutoBtn.classList.remove("active");
+    if (toggleAutoBtn) {
+      toggleAutoBtn.textContent = "▶ Auto";
+      toggleAutoBtn.classList.remove("active");
+    }
   }
 
   /* -------- SALVATAGGIO PROGRESSO -------- */
