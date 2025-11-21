@@ -12,8 +12,8 @@
   --accent: #6650ff;
   --accent-soft: rgba(102, 80, 255, 0.1);
 
-  /* evidenziatore: UN SOLO GIALLO PASTELLO */
-  --highlight-word: #fff9a8;
+  /* evidenziatore: giallo pastello unico */
+  --highlight-word: #fffbd1;
 
   --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
   --radius-lg: 18px;
@@ -239,7 +239,7 @@ body {
   min-width: 0;
 }
 
-/* QUADERNO BIANCO A RIGHE, SOLO SCROLL VERTICALE */
+/* Quaderno bianco a righe */
 
 .book-page {
   flex: 1;
@@ -254,7 +254,6 @@ body {
   overflow-x: hidden;
   position: relative;
 
-  /* righe sottili + margine rosso stile quaderno */
   background-image:
     linear-gradient(to right, rgba(255, 120, 120, 0.6) 60px, transparent 60px),
     repeating-linear-gradient(
@@ -303,17 +302,15 @@ body {
   font-size: 0.9rem;
 }
 
-/* Testo libro */
+/* Testo libro – niente movimento quando cambia paragrafo */
 
-/* padding + bordo sempre presenti (trasparente),
-   così quando il paragrafo diventa attivo NON SI MUOVE */
 .book-paragraph {
   line-height: 1.7;
   margin: 0.85rem 0;
   font-size: 1rem;
   color: #262626;
-  padding-left: 0.5rem;
-  border-left: 3px solid transparent;
+  padding-left: 0.5rem;             /* fissi sempre */
+  border-left: 3px solid transparent;/* fissi sempre */
   cursor: pointer;
   background: transparent;
   box-shadow: none;
@@ -324,12 +321,12 @@ body {
   color: #111;
 }
 
-/* paragrafo attivo: cambia SOLO il colore del bordo, non la dimensione */
+/* paragrafo attivo: cambia SOLO colore bordo, non dimensioni */
 .book-paragraph.active-paragraph {
-  border-left-color: rgba(255, 200, 120, 0.8);
+  border-left-color: rgba(255, 204, 120, 0.9);
 }
 
-/* Parole & evidenziatore pastello */
+/* parole + evidenziatore */
 
 .book-paragraph .word {
   display: inline;
@@ -337,10 +334,10 @@ body {
   word-wrap: break-word;
 }
 
-/* evidenziatore = SOLO giallo pastello, niente gradient, niente padding extra */
+/* SOLO giallo pastello, nessun gradient, nessuna ombra, nessun padding extra */
 .word-highlight {
   background-color: var(--highlight-word);
-  border-radius: 0.12em;
+  border-radius: 0.1em;
 }
 
 /* Indicatore pagina */
@@ -351,7 +348,7 @@ body {
   color: #555;
 }
 
-/* Scrollbar carina */
+/* Scrollbar */
 
 .book-page::-webkit-scrollbar {
   width: 8px;
