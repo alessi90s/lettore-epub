@@ -1,7 +1,4 @@
 // Lettore EPUB con evidenziatore a pastello
-// - usa JSZip per leggere il file .epub (che è uno zip)
-// - estrae i capitoli in ordine dal file OPF
-// - crea pagine "tipo libro" e evidenzia 4 parole alla volta
 
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("fileInput");
@@ -17,11 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const speedValue = document.getElementById("speedValue");
 
   const state = {
-    pages: [], // array di array: pages[pageIndex] = [paragrafo1, paragrafo2, ...]
+    pages: [],
     currentPageIndex: 0,
     currentParagraphIndex: 0,
     currentWordIndex: 0,
-    chunkSize: 4, // quante parole alla volta
+    chunkSize: 4,
     autoTimerId: null,
     autoSpeedMs: Number(speedRange.value),
     bookLoaded: false,
@@ -61,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Shortcut: barra spaziatrice = play/pausa
+  // Barra spaziatrice = play/pausa
   document.addEventListener("keydown", (e) => {
     if (e.code === "Space" && !e.target.closest("input")) {
       e.preventDefault();
@@ -180,22 +177,17 @@ document.addEventListener("DOMContentLoaded", () => {
     for (const href of spineHrefs) {
       const fullPath = resolveItemPath(opfPath, href);
       const chapterFile = zip.file(fullPath);
-      if (!chapterFile) {
-        // Capitolo non trovato, continuo
-        continue;
-      }
+      if (!chapterFile) continue;
 
       const xhtml = await chapterFile.async("string");
       const doc = parser.parseFromString(xhtml, "application/xhtml+xml");
       const body = doc.querySelector("body");
       if (!body) continue;
 
-      // Prendo blocchi di testo tipici
       const blocks = body.querySelectorAll("p, div, li, h1, h2, h3, h4");
       blocks.forEach((node) => {
         const text = (node.textContent || "").replace(/\s+/g, " ").trim();
         if (text.length > 30) {
-          // filtro via righe troppo corte tipo titoletti/spazi
           paragraphs.push(text);
         }
       });
@@ -204,20 +196,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return paragraphs;
   }
 
-  // Risolve percorsi come href relativi rispetto al file OPF
   function resolveItemPath(opfPath, href) {
     const baseDir = opfPath.includes("/")
       ? opfPath.slice(0, opfPath.lastIndexOf("/") + 1)
       : "";
     const fakeBase = "http://example.com/" + baseDir;
     const url = new URL(href, fakeBase);
-    // tolgo lo slash iniziale
     return url.pathname.replace(/^\/+/, "");
   }
 
-  // Costruisce le "pagine" del libro
   function buildPages(paragraphs) {
-    const CHARS_PER_PAGE = 1500; // puoi cambiare per fare pagine più lunghe/corte
+    const CHARS_PER_PAGE = 1500;
     const pages = [];
     let currentPage = [];
     let currentCount = 0;
@@ -240,7 +229,6 @@ document.addEventListener("DOMContentLoaded", () => {
     state.pages = pages;
   }
 
-  // Disegna una pagina nel DOM
   function renderPage(pageIndex) {
     if (!state.pages.length) return;
     if (pageIndex < 0 || pageIndex >= state.pages.length) return;
@@ -289,20 +277,18 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPage(newIndex);
   }
 
-  // Avvolge le parole in span.word per poterle evidenziare
   function wrapWordsInParagraph(pEl, text) {
     const words = text.split(/\s+/).filter((w) => w.length > 0);
     pEl.textContent = "";
     words.forEach((word, index) => {
       const span = document.createElement("span");
       span.className = "word";
-      // aggiungo uno spazio dopo ogni parola tranne l'ultima
       span.textContent = index < words.length - 1 ? word + " " : word;
       pEl.appendChild(span);
     });
   }
 
-  // Seleziona il paragrafo attivo
+  // NON facciamo più scrollIntoView → il testo non si muove
   function setActiveParagraph(paragraphIndex) {
     const paras = pageContainer.querySelectorAll(".book-paragraph");
     if (!paras.length) return;
@@ -317,12 +303,8 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentParagraphIndex = clampedIndex;
     state.currentWordIndex = 0;
     updateWordHighlight();
-
-    // centro il paragrafo attivo nella pagina
-    active.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  // Aggiorna l'evidenziatore sulle parole
   function updateWordHighlight() {
     const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
     if (!active) return;
@@ -340,7 +322,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Va avanti di un "blocco" di parole
   function advanceChunk() {
     const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
     if (!active) return;
@@ -352,21 +333,17 @@ document.addEventListener("DOMContentLoaded", () => {
       state.currentWordIndex += state.chunkSize;
       updateWordHighlight();
     } else {
-      // fine paragrafo -> passo al successivo
       const paras = pageContainer.querySelectorAll(".book-paragraph");
       if (state.currentParagraphIndex + 1 < paras.length) {
         setActiveParagraph(state.currentParagraphIndex + 1);
       } else if (state.currentPageIndex + 1 < state.pages.length) {
-        // fine pagina -> pagina successiva
         renderPage(state.currentPageIndex + 1);
       } else {
-        // fine libro
         stopAuto();
       }
     }
   }
 
-  // Va indietro di un blocco di parole
   function previousChunk() {
     const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
     if (!active) return;
@@ -378,7 +355,6 @@ document.addEventListener("DOMContentLoaded", () => {
       state.currentWordIndex -= state.chunkSize;
       updateWordHighlight();
     } else {
-      // siamo all'inizio del paragrafo -> passo al precedente
       const paras = pageContainer.querySelectorAll(".book-paragraph");
       if (state.currentParagraphIndex - 1 >= 0) {
         setActiveParagraph(state.currentParagraphIndex - 1);
@@ -389,7 +365,6 @@ document.addEventListener("DOMContentLoaded", () => {
           updateWordHighlight();
         }
       } else if (state.currentPageIndex - 1 >= 0) {
-        // vai alla pagina precedente, ultimo paragrafo
         renderPage(state.currentPageIndex - 1);
         const parasNew = pageContainer.querySelectorAll(".book-paragraph");
         if (parasNew.length) {
@@ -404,8 +379,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-
-  // Gestione auto evidenziatore
 
   function startAuto() {
     stopAuto();
@@ -423,8 +396,6 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleAutoBtn.classList.remove("active");
   }
 
-  // Utils
-
   function escapeHtml(str) {
     return String(str)
       .replace(/&/g, "&amp;")
@@ -432,7 +403,5 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/>/g, "&gt;");
   }
 
-  // inizializzo la label velocità
   speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(1) + " s";
 });
-
