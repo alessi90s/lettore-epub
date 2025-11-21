@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Merriweather:wght@400;700&display=swap');
+
 *,
 *::before,
 *::after {
@@ -11,11 +13,13 @@
   --accent: #6650ff;
   --accent-soft: rgba(102, 80, 255, 0.1);
 
+  /* font lettura */
+  --book-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --book-font-size-px: 18px;
+  --line-step: 26px;
+
   /* evidenziatore: giallo pastello visibile */
   --highlight-word: #ffef7d;
-
-  /* passo righe quaderno = line-height testo */
-  --line-step: 26px;
 
   --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
   --radius-lg: 20px;
@@ -30,7 +34,7 @@ body {
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--book-font-family);
   background: var(--bg-body);
   color: var(--text-main);
   display: flex;
@@ -117,7 +121,7 @@ body {
   position: relative;
 }
 
-/* Barra controlli (desktop: sopra, mobile: pannello) */
+/* Barra controlli */
 
 .controls-bar {
   display: flex;
@@ -132,12 +136,12 @@ body {
 .controls-group-inline {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
+  gap: 0.5rem;
+  font-size: 0.85rem;
   background: rgba(255, 255, 255, 0.95);
-  padding: 0.25rem 0.7rem;
+  padding: 0.35rem 0.9rem;
   border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .controls-title {
@@ -150,10 +154,26 @@ body {
   min-width: 220px;
 }
 
-.speed-value {
+.controls-font {
+  min-width: 220px;
+}
+
+.speed-value,
+.font-size-value {
   font-weight: 600;
   color: var(--accent);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  min-width: 56px;
+  text-align: center;
+}
+
+/* select font & color picker */
+.font-select {
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.82rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #fff;
 }
 
 /* Bottoni */
@@ -161,8 +181,8 @@ body {
 .btn {
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 0.22rem 0.6rem;
-  font-size: 0.78rem;
+  padding: 0.32rem 0.85rem;
+  font-size: 0.86rem;
   background: #f8f7ff;
   cursor: pointer;
   display: inline-flex;
@@ -191,7 +211,7 @@ body {
   background: linear-gradient(135deg, #6650ff, #ff69b4);
   color: #fff;
   border-color: transparent;
-  padding-inline: 0.7rem;
+  padding-inline: 0.9rem;
 }
 
 .btn-primary-small.active {
@@ -218,16 +238,16 @@ body {
   overflow-x: hidden;
 }
 
-/* quaderno (righe + margine rosso) */
+/* quaderno: righe + margine sottile */
 .page-inner,
 #pageContainer {
   position: relative;
   max-width: 46ch;
   margin: 0 auto;
-  padding: calc(var(--line-step) * 1.1) 48px calc(var(--line-step) * 1.1) 70px;
+  padding: calc(var(--line-step) * 1.1) 36px calc(var(--line-step) * 1.1) 50px;
 
   background-image:
-    linear-gradient(to right, rgba(255, 120, 120, 0.65) 46px, transparent 46px),
+    linear-gradient(to right, rgba(255, 160, 160, 0.5) 16px, transparent 16px),
     repeating-linear-gradient(
       to bottom,
       #ffffff 0px,
@@ -274,7 +294,7 @@ body {
 /* Testo libro */
 
 .book-paragraph {
-  font-size: 1rem;
+  font-size: var(--book-font-size-px);
   line-height: var(--line-step);
   margin: 0.5rem 0;
   color: #262626;
@@ -336,14 +356,14 @@ body {
   right: 1.1rem;
   bottom: 1.1rem;
   z-index: 40;
-  width: 46px;
-  height: 46px;
+  width: 52px;
+  height: 52px;
   border-radius: 999px;
   border: none;
   background: linear-gradient(135deg, #6650ff, #ff69b4);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
   color: #fff;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   cursor: pointer;
   display: none; /* visibile solo su mobile */
   align-items: center;
@@ -382,19 +402,18 @@ body {
     max-width: 100%;
   }
 
-  /* comandi = pannello a scomparsa in basso, con transform */
   .controls-bar {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     margin-bottom: 0;
-    padding: 0.6rem 0.8rem 0.8rem;
+    padding: 0.7rem 0.9rem 1rem;
     background: rgba(255, 255, 255, 0.97);
     box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.18);
     border-radius: 14px 14px 0 0;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.7rem;
     align-items: stretch;
     justify-content: flex-start;
     transform: translateY(100%);
@@ -413,10 +432,16 @@ body {
   .controls-group-inline {
     width: 100%;
     justify-content: space-between;
+    font-size: 0.9rem;
   }
 
-  .controls-speed {
-    min-width: 0;
+  .btn {
+    font-size: 0.95rem;
+    padding: 0.38rem 0.9rem;
+  }
+
+  .font-select {
+    font-size: 0.9rem;
   }
 
   .fab-controls {
