@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentPageIndex: 0,
     currentParagraphIndex: 0,
     currentWordIndex: 0,
-    chunkSize: 4,
+    chunkSize: 4, // parole max
     autoTimerId: null,
     autoSpeedMs: Number(speedRange.value),
     bookLoaded: false,
@@ -288,12 +288,42 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // NON facciamo più scrollIntoView → il testo non si muove
+  // Calcola boundaries di chunk per un paragrafo:
+  // max chunkSize parole, ma si ferma PRIMA se trova . ! ? …
+  function getWordsAndBoundaries(activeParagraph) {
+    const words = activeParagraph.querySelectorAll(".word");
+    const boundaries = [0];
+    let count = 0;
+
+    for (let i = 0; i < words.length; i++) {
+      count++;
+      const text = words[i].textContent || "";
+      const hasEndPunct = /[.!?…]/.test(text);
+
+      if (count >= state.chunkSize || hasEndPunct) {
+        boundaries.push(i + 1); // prossimo inizio
+        count = 0;
+      }
+    }
+
+    if (boundaries[boundaries.length - 1] !== words.length) {
+      boundaries.push(words.length);
+    }
+
+    return { words, boundaries };
+  }
+
+  // Seleziona il paragrafo attivo
   function setActiveParagraph(paragraphIndex) {
     const paras = pageContainer.querySelectorAll(".book-paragraph");
     if (!paras.length) return;
 
     const clampedIndex = Math.max(0, Math.min(paragraphIndex, paras.length - 1));
+
+    // pulisco tutti gli highlight ovunque
+    pageContainer.querySelectorAll(".word-highlight").forEach((el) => {
+      el.classList.remove("word-highlight");
+    });
 
     paras.forEach((p) => p.classList.remove("active-paragraph"));
     const active = paras[clampedIndex];
@@ -305,19 +335,40 @@ document.addEventListener("DOMContentLoaded", () => {
     updateWordHighlight();
   }
 
+  // Aggiorna l'evidenziatore sul blocco corrente, fermandosi al punto
   function updateWordHighlight() {
     const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
     if (!active) return;
 
-    const words = active.querySelectorAll(".word");
-    words.forEach((w) => w.classList.remove("word-highlight"));
+    const { words, boundaries } = getWordsAndBoundaries(active);
+
+    // pulisco qualunque highlight residuo nella pagina
+    pageContainer.querySelectorAll(".word-highlight").forEach((el) => {
+      el.classList.remove("word-highlight");
+    });
 
     if (!words.length) return;
 
-    const start = Math.max(0, Math.min(state.currentWordIndex, words.length - 1));
-    const end = Math.min(start + state.chunkSize, words.length);
+    let start = state.currentWordIndex || 0;
+    if (start >= words.length) {
+      start = boundaries[Math.max(0, boundaries.length - 2)] || 0;
+    }
 
-    for (let i = start; i < end; i++) {
+    // trovo il boundary che contiene questo start
+    let boundaryIndex = 0;
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      if (boundaries[i] <= start && start < boundaries[i + 1]) {
+        boundaryIndex = i;
+        break;
+      }
+    }
+
+    const chunkStart = boundaries[boundaryIndex];
+    const chunkEnd = boundaries[boundaryIndex + 1];
+
+    state.currentWordIndex = chunkStart;
+
+    for (let i = chunkStart; i < chunkEnd; i++) {
       words[i].classList.add("word-highlight");
     }
   }
@@ -326,21 +377,47 @@ document.addEventListener("DOMContentLoaded", () => {
     const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
     if (!active) return;
 
-    const words = active.querySelectorAll(".word");
+    const { words, boundaries } = getWordsAndBoundaries(active);
     if (!words.length) return;
 
-    if (state.currentWordIndex + state.chunkSize < words.length) {
-      state.currentWordIndex += state.chunkSize;
-      updateWordHighlight();
-    } else {
-      const paras = pageContainer.querySelectorAll(".book-paragraph");
-      if (state.currentParagraphIndex + 1 < paras.length) {
-        setActiveParagraph(state.currentParagraphIndex + 1);
-      } else if (state.currentPageIndex + 1 < state.pages.length) {
-        renderPage(state.currentPageIndex + 1);
-      } else {
-        stopAuto();
+    let start = state.currentWordIndex || 0;
+    if (start >= words.length) {
+      start = boundaries[Math.max(0, boundaries.length - 2)] || 0;
+    }
+
+    // trovo l'indice del boundary attuale
+    let boundaryIndex = 0;
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      if (boundaries[i] === start) {
+        boundaryIndex = i;
+        break;
       }
+      if (boundaries[i] < start && start < boundaries[i + 1]) {
+        boundaryIndex = i;
+        break;
+      }
+    }
+
+    // se non siamo all'ultimo chunk del paragrafo → vai al prossimo chunk
+    if (boundaryIndex < boundaries.length - 2) {
+      const nextStart = boundaries[boundaryIndex + 1];
+      if (nextStart < words.length) {
+        state.currentWordIndex = nextStart;
+        updateWordHighlight();
+        return;
+      }
+    }
+
+    // altrimenti: fine paragrafo → passo al successivo
+    const paras = pageContainer.querySelectorAll(".book-paragraph");
+    if (state.currentParagraphIndex + 1 < paras.length) {
+      setActiveParagraph(state.currentParagraphIndex + 1);
+    } else if (state.currentPageIndex + 1 < state.pages.length) {
+      // fine pagina -> pagina successiva
+      renderPage(state.currentPageIndex + 1);
+    } else {
+      // fine libro
+      stopAuto();
     }
   }
 
@@ -348,33 +425,70 @@ document.addEventListener("DOMContentLoaded", () => {
     const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
     if (!active) return;
 
-    const words = active.querySelectorAll(".word");
+    const { words, boundaries } = getWordsAndBoundaries(active);
     if (!words.length) return;
 
-    if (state.currentWordIndex - state.chunkSize >= 0) {
-      state.currentWordIndex -= state.chunkSize;
+    let start = state.currentWordIndex || 0;
+    if (start > words.length) {
+      start = boundaries[Math.max(0, boundaries.length - 2)] || 0;
+    }
+
+    // trovo l'indice del boundary attuale
+    let boundaryIndex = 0;
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      if (boundaries[i] === start) {
+        boundaryIndex = i;
+        break;
+      }
+      if (boundaries[i] < start && start < boundaries[i + 1]) {
+        boundaryIndex = i;
+        break;
+      }
+    }
+
+    // se c'è un chunk prima nello stesso paragrafo
+    if (boundaryIndex > 0) {
+      const prevStart = boundaries[boundaryIndex - 1];
+      state.currentWordIndex = prevStart;
       updateWordHighlight();
-    } else {
-      const paras = pageContainer.querySelectorAll(".book-paragraph");
-      if (state.currentParagraphIndex - 1 >= 0) {
-        setActiveParagraph(state.currentParagraphIndex - 1);
-        const newActive = pageContainer.querySelector(".book-paragraph.active-paragraph");
-        const newWords = newActive ? newActive.querySelectorAll(".word") : [];
-        if (newWords.length) {
-          state.currentWordIndex = Math.max(0, newWords.length - state.chunkSize);
+      return;
+    }
+
+    // altrimenti passo al paragrafo precedente
+    const paras = pageContainer.querySelectorAll(".book-paragraph");
+    if (state.currentParagraphIndex - 1 >= 0) {
+      // vai al paragrafo precedente e metti l'ultimo chunk di quel paragrafo
+      const prevIndex = state.currentParagraphIndex - 1;
+      state.currentParagraphIndex = prevIndex;
+      const prevPara = paras[prevIndex];
+      paras.forEach((p) => p.classList.remove("active-paragraph"));
+      prevPara.classList.add("active-paragraph");
+
+      const { words: prevWords, boundaries: prevBoundaries } =
+        getWordsAndBoundaries(prevPara);
+      if (prevWords.length) {
+        const lastStart = prevBoundaries[Math.max(0, prevBoundaries.length - 2)];
+        state.currentWordIndex = lastStart || 0;
+        updateWordHighlight();
+      }
+    } else if (state.currentPageIndex - 1 >= 0) {
+      // pagina precedente, ultimo paragrafo/ultimo chunk
+      renderPage(state.currentPageIndex - 1);
+      const newParas = pageContainer.querySelectorAll(".book-paragraph");
+      if (newParas.length) {
+        const lastIdx = newParas.length - 1;
+        state.currentParagraphIndex = lastIdx;
+        newParas.forEach((p) => p.classList.remove("active-paragraph"));
+        const lastPara = newParas[lastIdx];
+        lastPara.classList.add("active-paragraph");
+
+        const { words: lastWords, boundaries: lastBoundaries } =
+          getWordsAndBoundaries(lastPara);
+        if (lastWords.length) {
+          const lastStart =
+            lastBoundaries[Math.max(0, lastBoundaries.length - 2)];
+          state.currentWordIndex = lastStart || 0;
           updateWordHighlight();
-        }
-      } else if (state.currentPageIndex - 1 >= 0) {
-        renderPage(state.currentPageIndex - 1);
-        const parasNew = pageContainer.querySelectorAll(".book-paragraph");
-        if (parasNew.length) {
-          setActiveParagraph(parasNew.length - 1);
-          const newActive = pageContainer.querySelector(".book-paragraph.active-paragraph");
-          const newWords = newActive ? newActive.querySelectorAll(".word") : [];
-          if (newWords.length) {
-            state.currentWordIndex = Math.max(0, newWords.length - state.chunkSize);
-            updateWordHighlight();
-          }
         }
       }
     }
