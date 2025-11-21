@@ -1,4 +1,4 @@
-// Lettore EPUB con evidenziatore a pastello
+// Lettore EPUB con evidenziatore a pastello “fluido”
 
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("fileInput");
@@ -17,8 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
     pages: [],
     currentPageIndex: 0,
     currentParagraphIndex: 0,
-    currentWordIndex: 0,
-    chunkSize: 4, // parole max
+    currentWordIndex: 0,   // indice della prima parola evidenziata
+    chunkSize: 4,          // quante parole max evidenziare
     autoTimerId: null,
     autoSpeedMs: Number(speedRange.value),
     bookLoaded: false,
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.autoSpeedMs = Number(e.target.value);
     speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(1) + " s";
     if (state.autoTimerId) {
-      startAuto(); // restart per applicare la nuova velocità
+      startAuto(); // riavvia con la nuova velocità
     }
   });
 
@@ -96,10 +96,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       console.error(err);
       pageContainer.innerHTML = `
-        <div class="placeholder">
-          <h1>Errore di lettura ⚠️</h1>
-          <p>Non sono riuscito a leggere questo EPUB.</p>
-          <p>Messaggio: <code>${escapeHtml(err.message || String(err))}</code></p>
+        <div class="page-inner">
+          <div class="placeholder">
+            <h1>Errore di lettura ⚠️</h1>
+            <p>Non sono riuscito a leggere questo EPUB.</p>
+            <p>Messaggio: <code>${escapeHtml(err.message || String(err))}</code></p>
+          </div>
         </div>
       `;
       statusEl.textContent = "Errore: impossibile leggere il file. Forse non è un EPUB valido.";
@@ -238,7 +240,6 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentWordIndex = 0;
 
     pageContainer.innerHTML = "";
-
     const inner = document.createElement("div");
     inner.className = "page-inner";
 
@@ -288,211 +289,195 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Calcola boundaries di chunk per un paragrafo:
-  // max chunkSize parole, ma si ferma PRIMA se trova . ! ? …
-  function getWordsAndBoundaries(activeParagraph) {
-    const words = activeParagraph.querySelectorAll(".word");
-    const boundaries = [0];
-    let count = 0;
+  // --- Highlight fluido -----------------------------------------------------
 
+  // individua i confini delle frasi (solo per non oltrepassare il punto)
+  function getSentenceBoundaries(words) {
+    const sentenceStarts = [0];
+    const sentenceEnds = [];
     for (let i = 0; i < words.length; i++) {
-      count++;
       const text = words[i].textContent || "";
-      const hasEndPunct = /[.!?…]/.test(text);
-
-      if (count >= state.chunkSize || hasEndPunct) {
-        boundaries.push(i + 1); // prossimo inizio
-        count = 0;
+      if (/[.!?…]/.test(text)) {
+        sentenceEnds.push(i);
+        if (i + 1 < words.length) {
+          sentenceStarts.push(i + 1);
+        }
       }
     }
 
-    if (boundaries[boundaries.length - 1] !== words.length) {
-      boundaries.push(words.length);
+    if (!sentenceEnds.length) {
+      sentenceEnds.push(words.length - 1);
+    } else if (sentenceEnds.length < sentenceStarts.length) {
+      sentenceEnds.push(words.length - 1);
     }
 
-    return { words, boundaries };
+    return { sentenceStarts, sentenceEnds };
   }
 
-  // Seleziona il paragrafo attivo
+  function getActiveParagraphData() {
+    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
+    if (!active) return null;
+    const words = active.querySelectorAll(".word");
+    if (!words.length) return null;
+    const { sentenceStarts, sentenceEnds } = getSentenceBoundaries(words);
+    return { active, words, sentenceStarts, sentenceEnds };
+  }
+
+  function clearAllHighlights() {
+    pageContainer.querySelectorAll(".word-highlight").forEach((el) =>
+      el.classList.remove("word-highlight")
+    );
+  }
+
   function setActiveParagraph(paragraphIndex) {
     const paras = pageContainer.querySelectorAll(".book-paragraph");
     if (!paras.length) return;
 
     const clampedIndex = Math.max(0, Math.min(paragraphIndex, paras.length - 1));
 
-    // pulisco tutti gli highlight ovunque
-    pageContainer.querySelectorAll(".word-highlight").forEach((el) => {
-      el.classList.remove("word-highlight");
-    });
-
+    clearAllHighlights();
     paras.forEach((p) => p.classList.remove("active-paragraph"));
-    const active = paras[clampedIndex];
-    if (!active) return;
 
+    const active = paras[clampedIndex];
     active.classList.add("active-paragraph");
+
     state.currentParagraphIndex = clampedIndex;
     state.currentWordIndex = 0;
     updateWordHighlight();
   }
 
-  // Aggiorna l'evidenziatore sul blocco corrente, fermandosi al punto
   function updateWordHighlight() {
-    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
-    if (!active) return;
+    const data = getActiveParagraphData();
+    if (!data) return;
 
-    const { words, boundaries } = getWordsAndBoundaries(active);
+    const { words, sentenceStarts, sentenceEnds } = data;
 
-    // pulisco qualunque highlight residuo nella pagina
-    pageContainer.querySelectorAll(".word-highlight").forEach((el) => {
-      el.classList.remove("word-highlight");
-    });
-
+    clearAllHighlights();
     if (!words.length) return;
 
-    let start = state.currentWordIndex || 0;
-    if (start >= words.length) {
-      start = boundaries[Math.max(0, boundaries.length - 2)] || 0;
+    let idx = state.currentWordIndex;
+    if (idx < 0) idx = 0;
+    if (idx >= words.length) idx = words.length - 1;
+    state.currentWordIndex = idx;
+
+    // trova la frase a cui appartiene l'indice
+    let sentenceIndex = 0;
+    for (let i = 0; i < sentenceStarts.length; i++) {
+      if (idx >= sentenceStarts[i]) sentenceIndex = i;
+      else break;
     }
 
-    // trovo il boundary che contiene questo start
-    let boundaryIndex = 0;
-    for (let i = 0; i < boundaries.length - 1; i++) {
-      if (boundaries[i] <= start && start < boundaries[i + 1]) {
-        boundaryIndex = i;
-        break;
-      }
-    }
+    const sentStart = sentenceStarts[sentenceIndex];
+    const sentEnd = sentenceEnds[sentenceIndex];
 
-    const chunkStart = boundaries[boundaryIndex];
-    const chunkEnd = boundaries[boundaryIndex + 1];
+    const start = idx;
+    const end = Math.min(idx + state.chunkSize - 1, sentEnd);
 
-    state.currentWordIndex = chunkStart;
-
-    for (let i = chunkStart; i < chunkEnd; i++) {
+    for (let i = start; i <= end; i++) {
       words[i].classList.add("word-highlight");
     }
   }
 
-  function advanceChunk() {
-    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
-    if (!active) return;
-
-    const { words, boundaries } = getWordsAndBoundaries(active);
-    if (!words.length) return;
-
-    let start = state.currentWordIndex || 0;
-    if (start >= words.length) {
-      start = boundaries[Math.max(0, boundaries.length - 2)] || 0;
-    }
-
-    // trovo l'indice del boundary attuale
-    let boundaryIndex = 0;
-    for (let i = 0; i < boundaries.length - 1; i++) {
-      if (boundaries[i] === start) {
-        boundaryIndex = i;
-        break;
-      }
-      if (boundaries[i] < start && start < boundaries[i + 1]) {
-        boundaryIndex = i;
-        break;
-      }
-    }
-
-    // se non siamo all'ultimo chunk del paragrafo → vai al prossimo chunk
-    if (boundaryIndex < boundaries.length - 2) {
-      const nextStart = boundaries[boundaryIndex + 1];
-      if (nextStart < words.length) {
-        state.currentWordIndex = nextStart;
-        updateWordHighlight();
-        return;
-      }
-    }
-
-    // altrimenti: fine paragrafo → passo al successivo
+  function goToNextParagraphStart() {
     const paras = pageContainer.querySelectorAll(".book-paragraph");
     if (state.currentParagraphIndex + 1 < paras.length) {
       setActiveParagraph(state.currentParagraphIndex + 1);
     } else if (state.currentPageIndex + 1 < state.pages.length) {
-      // fine pagina -> pagina successiva
       renderPage(state.currentPageIndex + 1);
     } else {
-      // fine libro
       stopAuto();
     }
   }
 
-  function previousChunk() {
-    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
-    if (!active) return;
-
-    const { words, boundaries } = getWordsAndBoundaries(active);
-    if (!words.length) return;
-
-    let start = state.currentWordIndex || 0;
-    if (start > words.length) {
-      start = boundaries[Math.max(0, boundaries.length - 2)] || 0;
-    }
-
-    // trovo l'indice del boundary attuale
-    let boundaryIndex = 0;
-    for (let i = 0; i < boundaries.length - 1; i++) {
-      if (boundaries[i] === start) {
-        boundaryIndex = i;
-        break;
-      }
-      if (boundaries[i] < start && start < boundaries[i + 1]) {
-        boundaryIndex = i;
-        break;
-      }
-    }
-
-    // se c'è un chunk prima nello stesso paragrafo
-    if (boundaryIndex > 0) {
-      const prevStart = boundaries[boundaryIndex - 1];
-      state.currentWordIndex = prevStart;
-      updateWordHighlight();
-      return;
-    }
-
-    // altrimenti passo al paragrafo precedente
+  function goToPrevParagraphEnd() {
     const paras = pageContainer.querySelectorAll(".book-paragraph");
     if (state.currentParagraphIndex - 1 >= 0) {
-      // vai al paragrafo precedente e metti l'ultimo chunk di quel paragrafo
-      const prevIndex = state.currentParagraphIndex - 1;
-      state.currentParagraphIndex = prevIndex;
-      const prevPara = paras[prevIndex];
+      const prevIdx = state.currentParagraphIndex - 1;
       paras.forEach((p) => p.classList.remove("active-paragraph"));
+      const prevPara = paras[prevIdx];
       prevPara.classList.add("active-paragraph");
+      state.currentParagraphIndex = prevIdx;
 
-      const { words: prevWords, boundaries: prevBoundaries } =
-        getWordsAndBoundaries(prevPara);
-      if (prevWords.length) {
-        const lastStart = prevBoundaries[Math.max(0, prevBoundaries.length - 2)];
-        state.currentWordIndex = lastStart || 0;
+      const words = prevPara.querySelectorAll(".word");
+      if (words.length) {
+        state.currentWordIndex = words.length - 1;
         updateWordHighlight();
       }
     } else if (state.currentPageIndex - 1 >= 0) {
-      // pagina precedente, ultimo paragrafo/ultimo chunk
       renderPage(state.currentPageIndex - 1);
       const newParas = pageContainer.querySelectorAll(".book-paragraph");
       if (newParas.length) {
         const lastIdx = newParas.length - 1;
-        state.currentParagraphIndex = lastIdx;
         newParas.forEach((p) => p.classList.remove("active-paragraph"));
         const lastPara = newParas[lastIdx];
         lastPara.classList.add("active-paragraph");
+        state.currentParagraphIndex = lastIdx;
 
-        const { words: lastWords, boundaries: lastBoundaries } =
-          getWordsAndBoundaries(lastPara);
-        if (lastWords.length) {
-          const lastStart =
-            lastBoundaries[Math.max(0, lastBoundaries.length - 2)];
-          state.currentWordIndex = lastStart || 0;
+        const words = lastPara.querySelectorAll(".word");
+        if (words.length) {
+          state.currentWordIndex = words.length - 1;
           updateWordHighlight();
         }
       }
     }
   }
+
+  function advanceChunk() {
+    const data = getActiveParagraphData();
+    if (!data) return;
+    const { words, sentenceStarts, sentenceEnds } = data;
+    if (!words.length) return;
+
+    let idx = state.currentWordIndex;
+
+    if (idx >= words.length - 1) {
+      goToNextParagraphStart();
+      return;
+    }
+
+    // trova la frase corrente
+    let sentenceIndex = 0;
+    for (let i = 0; i < sentenceStarts.length; i++) {
+      if (idx >= sentenceStarts[i]) sentenceIndex = i;
+      else break;
+    }
+
+    const sentEnd = sentenceEnds[sentenceIndex];
+
+    let nextIdx = idx + 1;
+    if (nextIdx > sentEnd) {
+      // passa all'inizio della frase successiva
+      if (sentenceIndex + 1 < sentenceStarts.length) {
+        nextIdx = sentenceStarts[sentenceIndex + 1];
+      } else {
+        // niente frase successiva: paragrafo finito
+        goToNextParagraphStart();
+        return;
+      }
+    }
+
+    state.currentWordIndex = nextIdx;
+    updateWordHighlight();
+  }
+
+  function previousChunk() {
+    const data = getActiveParagraphData();
+    if (!data) return;
+    const { words } = data;
+    if (!words.length) return;
+
+    let idx = state.currentWordIndex;
+
+    if (idx <= 0) {
+      goToPrevParagraphEnd();
+      return;
+    }
+
+    state.currentWordIndex = idx - 1;
+    updateWordHighlight();
+  }
+
+  // --- Auto evidenziatore ---
 
   function startAuto() {
     stopAuto();
@@ -517,5 +502,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/>/g, "&gt;");
   }
 
+  // set iniziale etichetta velocità
   speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(1) + " s";
 });
