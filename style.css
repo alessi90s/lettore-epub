@@ -242,25 +242,23 @@ body {
   min-width: 0;
 }
 
-/* Quaderno: più “compatto” e allineato al testo */
+/* Quaderno: più stretto e “aderente” al testo */
 
 .book-page {
-  /* niente flex:1 → altezza si adatta al contenuto */
   width: 100%;
-  max-width: 800px;          /* un filo più stretto */
-  max-height: 80vh;          /* non diventa mai più alto dello schermo */
+  max-width: 680px;          /* più stretto rispetto a prima */
+  max-height: 80vh;
   background-color: var(--bg-book);
   margin: 0 auto;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
-  padding: var(--line-step) 1.6rem;  /* padding verticale = multiplo delle righe */
+  padding: var(--line-step) 1.4rem;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
 
-  /* righe e margine rosso del quaderno */
   background-image:
-    linear-gradient(to right, rgba(255, 120, 120, 0.6) 60px, transparent 60px),
+    linear-gradient(to right, rgba(255, 120, 120, 0.6) 50px, transparent 50px),
     repeating-linear-gradient(
       to bottom,
       #ffffff 0px,
@@ -271,9 +269,9 @@ body {
 }
 
 .page-inner {
-  max-width: 60ch;
+  max-width: 46ch;           /* colonna testo più stretta */
   margin: 0 auto;
-  padding-left: 50px; /* testo dopo il margine rosso */
+  padding-left: 40px;        /* dopo margine rosso */
 }
 
 .page-footer {
@@ -311,7 +309,7 @@ body {
 
 .book-paragraph {
   font-size: 1rem;                 /* 16px */
-  line-height: 1.5;                /* 16 * 1.5 = 24px = var(--line-step) */
+  line-height: 1.5;                /* 24px = var(--line-step) */
   margin: 0.85rem 0;
   color: #262626;
   padding-left: 0.5rem;
@@ -386,12 +384,12 @@ body {
 
   .book-page {
     max-width: 100%;
-    padding: var(--line-step) 1.2rem;
+    padding: var(--line-step) 1.1rem;
   }
 
   .page-inner {
     max-width: 100%;
-    padding-left: 45px;
+    padding-left: 35px;
   }
 
   .status {
