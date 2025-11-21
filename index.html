@@ -7,54 +7,52 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Barra superiore: logo + carica EPUB + stato -->
+  <!-- Barra superiore -->
   <header class="top-bar">
-    <div class="brand">
-      <span class="logo-dot"></span>
-      <span class="brand-text">Lettore EPUB</span>
+    <div class="top-inner">
+      <div class="brand">
+        <span class="logo-dot"></span>
+        <span class="brand-text">Lettore EPUB</span>
+      </div>
+
+      <label class="file-label">
+        <span>Carica EPUB</span>
+        <input type="file" id="fileInput" accept=".epub">
+      </label>
+
+      <div class="status" id="status">Nessun file caricato</div>
     </div>
-
-    <label class="file-label">
-      <span>Carica EPUB</span>
-      <input type="file" id="fileInput" accept=".epub">
-    </label>
-
-    <div class="status" id="status">Nessun file caricato</div>
   </header>
 
-  <!-- Barra controlli compatta sotto il top -->
-  <section class="controls-bar">
-    <div class="controls-group-inline">
-      <span class="controls-title">Pagine</span>
-      <button id="prevPage" class="btn btn-ghost" type="button">&larr;</button>
-      <span id="pageIndicator" class="page-indicator">0 / 0</span>
-      <button id="nextPage" class="btn btn-ghost" type="button">&rarr;</button>
-    </div>
+  <!-- Corpo: controlli compatti + quaderno centrato -->
+  <main class="layout-center">
+    <section class="controls-bar">
+      <div class="controls-group-inline">
+        <span class="controls-title">Pagine</span>
+        <button id="prevPage" class="btn btn-ghost" type="button">&larr;</button>
+        <span id="pageIndicator" class="page-indicator">0 / 0</span>
+        <button id="nextPage" class="btn btn-ghost" type="button">&rarr;</button>
+      </div>
 
-    <div class="controls-group-inline">
-      <span class="controls-title">Parole</span>
-      <button id="prevChunk" class="btn btn-ghost" type="button">&larr;</button>
-      <button id="nextChunk" class="btn btn-ghost" type="button">&rarr;</button>
-      <button id="toggleAuto" class="btn btn-primary-small" type="button">
-        ▶ Auto
-      </button>
-    </div>
+      <div class="controls-group-inline">
+        <span class="controls-title">Parole</span>
+        <button id="prevChunk" class="btn btn-ghost" type="button">&larr;</button>
+        <button id="nextChunk" class="btn btn-ghost" type="button">&rarr;</button>
+        <button id="toggleAuto" class="btn btn-primary-small" type="button">
+          ▶ Auto
+        </button>
+      </div>
 
-    <div class="controls-group-inline controls-speed">
-      <span class="controls-title">Velocità</span>
-      <!-- 0 = 5s (lentissimo), 100 = 0,2s (veloce) -->
-      <input id="speedRange" type="range" min="0" max="100" step="1" value="40">
-      <span id="speedValue" class="speed-value">1,00 s</span>
-    </div>
-  </section>
+      <div class="controls-group-inline controls-speed">
+        <span class="controls-title">Velocità</span>
+        <!-- 0 = 5s (lentissimo), 100 = 0,2s (veloce) -->
+        <input id="speedRange" type="range" min="0" max="100" step="1" value="40">
+        <span id="speedValue" class="speed-value">1,00 s</span>
+      </div>
+    </section>
 
-  <!-- Area centrale con quaderno -->
-  <main class="page-wrapper">
     <section class="book-area">
       <div class="book-page" id="pageContainer">
-        <!-- Sfondo quaderno che scrolla insieme al testo -->
-        <div class="paper-lines"></div>
-
         <div class="page-inner">
           <div class="placeholder">
             <h1>Benvenuto 👋</h1>
