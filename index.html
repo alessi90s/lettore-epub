@@ -47,7 +47,8 @@
 
       <div class="controls-group">
         <label class="controls-label">Velocità auto evidenziatore</label>
-        <input id="speedRange" type="range" min="400" max="1600" step="100" value="900">
+        <!-- range più ampio: 0,2s - 2,5s -->
+        <input id="speedRange" type="range" min="200" max="2500" step="100" value="900">
         <div class="speed-label">
           <span>Lento</span>
           <span id="speedValue">0,9 s</span>
@@ -64,10 +65,12 @@
 
     <section class="book-area">
       <div class="book-page" id="pageContainer">
-        <div class="placeholder">
-          <h1>Benvenuto 👋</h1>
-          <p>Carica un file <strong>.epub</strong> dal pulsante in alto per iniziare a leggere.</p>
-          <p>Il paragrafo che stai leggendo verrà illuminato, con <strong>4 parole alla volta</strong> evidenziate con un effetto evidenziatore pastello.</p>
+        <div class="page-inner">
+          <div class="placeholder">
+            <h1>Benvenuto 👋</h1>
+            <p>Carica un file <strong>.epub</strong> dal pulsante in alto per iniziare a leggere.</p>
+            <p>Il paragrafo che stai leggendo verrà illuminato, con <strong>4 parole alla volta</strong> evidenziate con un effetto evidenziatore pastello.</p>
+          </div>
         </div>
       </div>
 
@@ -82,4 +85,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
