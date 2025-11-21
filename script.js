@@ -1,4 +1,4 @@
-// Lettore EPUB mobile-friendly con evidenziatore pastello
+// Lettore EPUB mobile-friendly con evidenziatore pastello + salvataggio progressi
 
 const WELCOME_HTML = `
   <div class="placeholder">
@@ -41,7 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
     chunkSize: 4,
     autoTimerId: null,
     autoSpeedMs: sliderValueToMs(speedRange.value),
-    bookLoaded: false
+    bookLoaded: false,
+    bookKey: null // chiave per localStorage
   };
 
   /* -------- EVENTI UI -------- */
@@ -50,8 +51,13 @@ document.addEventListener("DOMContentLoaded", () => {
     fileInput.addEventListener("change", handleFileChange);
   }
 
-  prevPageBtn.addEventListener("click", () => changePage(-1));
-  nextPageBtn.addEventListener("click", () => changePage(1));
+  prevPageBtn.addEventListener("click", () => {
+    changePage(-1);
+  });
+
+  nextPageBtn.addEventListener("click", () => {
+    changePage(1);
+  });
 
   prevChunkBtn.addEventListener("click", () => {
     stopAuto();
@@ -82,16 +88,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // FAB per aprire/chiudere i comandi su mobile
-  fabControls.addEventListener("click", () => {
-    const isOpen = controlsBar.classList.toggle("controls-open");
-    fabControls.textContent = isOpen ? "✕" : "☰";
-  });
+  if (fabControls) {
+    fabControls.addEventListener("click", () => {
+      const isOpen = controlsBar.classList.toggle("controls-open");
+      fabControls.textContent = isOpen ? "✕" : "☰";
+    });
+  }
 
-  // Chiudi pannello comandi quando si cambia pagina/parole in auto
   function closeControlsPanel() {
     if (controlsBar.classList.contains("controls-open")) {
       controlsBar.classList.remove("controls-open");
-      fabControls.textContent = "☰";
+      if (fabControls) fabControls.textContent = "☰";
     }
   }
 
@@ -132,10 +139,34 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       buildPages(paragraphs);
-      renderPage(0);
+
+      // Chiave per i progressi di questo libro
+      const fileKey = `epub-progress:${file.name}:${file.size}`;
+      state.bookKey = fileKey;
+
+      let resume = null;
+      const savedRaw = localStorage.getItem(fileKey);
+      if (savedRaw) {
+        try {
+          resume = JSON.parse(savedRaw);
+        } catch {
+          resume = null;
+        }
+      }
+
+      if (resume && typeof resume.pageIndex === "number") {
+        const safePage = clamp(resume.pageIndex, 0, state.pages.length - 1);
+        renderPage(safePage, {
+          paragraphIndex: resume.paragraphIndex || 0,
+          wordIndex: resume.wordIndex || 0
+        });
+        statusEl.textContent = `File caricato: ${file.name} • Ripreso a pagina ${safePage + 1}`;
+      } else {
+        renderPage(0, null);
+        statusEl.textContent = `File caricato: ${file.name} • Paragrafi: ${paragraphs.length}`;
+      }
 
       state.bookLoaded = true;
-      statusEl.textContent = `File caricato: ${file.name} • Paragrafi: ${paragraphs.length}`;
     } catch (err) {
       console.error(err);
       pageContainer.innerHTML = `
@@ -157,6 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentPageIndex = 0;
     state.currentParagraphIndex = 0;
     state.currentWordIndex = 0;
+    state.bookKey = null;
     pageContainer.innerHTML = WELCOME_HTML;
     pageIndicator.textContent = "0 / 0";
   }
@@ -235,7 +267,8 @@ document.addEventListener("DOMContentLoaded", () => {
     state.pages = pages;
   }
 
-  function renderPage(pageIndex) {
+  // renderPage ora accetta opzionalmente "restore" per riprendere posizione
+  function renderPage(pageIndex, restore) {
     if (!state.pages.length) return;
     if (pageIndex < 0 || pageIndex >= state.pages.length) return;
 
@@ -263,7 +296,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     pageContainer.appendChild(fragment);
-    setActiveParagraph(0);
+
+    if (restore && typeof restore.paragraphIndex === "number") {
+      const safePara = clamp(
+        restore.paragraphIndex,
+        0,
+        pageContainer.querySelectorAll(".book-paragraph").length - 1
+      );
+      setActiveParagraph(safePara);
+      state.currentWordIndex = Math.max(0, restore.wordIndex || 0);
+      updateWordHighlight();
+      scrollActiveParagraphIntoView();
+    } else {
+      setActiveParagraph(0);
+      scrollActiveParagraphIntoView();
+    }
+
     updatePageIndicator();
     closeControlsPanel();
   }
@@ -279,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const newIndex = state.currentPageIndex + direction;
     if (newIndex < 0 || newIndex >= state.pages.length) return;
     stopAuto();
-    renderPage(newIndex);
+    renderPage(newIndex, null);
   }
 
   function wrapWordsInParagraph(pEl, text) {
@@ -291,6 +339,19 @@ document.addEventListener("DOMContentLoaded", () => {
       span.textContent = index < words.length - 1 ? word + " " : word;
       pEl.appendChild(span);
     });
+  }
+
+  function scrollActiveParagraphIntoView() {
+    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
+    if (!active) return;
+    const parent = active.closest(".book-page") || pageContainer.parentElement;
+    if (!parent) return;
+    const rect = active.getBoundingClientRect();
+    const parentRect = parent.getBoundingClientRect();
+
+    if (rect.top < parentRect.top + 60 || rect.bottom > parentRect.bottom - 60) {
+      active.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
   }
 
   /* -------- EVIDENZIATORE -------- */
@@ -336,7 +397,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const paras = pageContainer.querySelectorAll(".book-paragraph");
     if (!paras.length) return;
 
-    const clampedIndex = Math.max(0, Math.min(paragraphIndex, paras.length - 1));
+    const clampedIndex = clamp(paragraphIndex, 0, paras.length - 1);
 
     clearAllHighlights();
     paras.forEach((p) => p.classList.remove("active-paragraph"));
@@ -347,6 +408,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentParagraphIndex = clampedIndex;
     state.currentWordIndex = 0;
     updateWordHighlight();
+    scrollActiveParagraphIntoView();
   }
 
   function updateWordHighlight() {
@@ -377,6 +439,8 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let i = start; i <= end; i++) {
       words[i].classList.add("word-highlight");
     }
+
+    saveProgress(); // ogni volta che cambia evidenziazione, salvo
   }
 
   function goToNextParagraphStart() {
@@ -384,7 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (state.currentParagraphIndex + 1 < paras.length) {
       setActiveParagraph(state.currentParagraphIndex + 1);
     } else if (state.currentPageIndex + 1 < state.pages.length) {
-      renderPage(state.currentPageIndex + 1);
+      renderPage(state.currentPageIndex + 1, { paragraphIndex: 0, wordIndex: 0 });
     } else {
       stopAuto();
     }
@@ -405,7 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateWordHighlight();
       }
     } else if (state.currentPageIndex - 1 >= 0) {
-      renderPage(state.currentPageIndex - 1);
+      renderPage(state.currentPageIndex - 1, null);
       const newParas = pageContainer.querySelectorAll(".book-paragraph");
       if (newParas.length) {
         const lastIdx = newParas.length - 1;
@@ -475,6 +539,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateWordHighlight();
   }
 
+  /* -------- AUTO -------- */
+
   function startAuto() {
     stopAuto();
     state.autoTimerId = setInterval(advanceChunk, state.autoSpeedMs);
@@ -491,10 +557,33 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleAutoBtn.classList.remove("active");
   }
 
+  /* -------- SALVATAGGIO PROGRESSO -------- */
+
+  function saveProgress() {
+    if (!state.bookKey) return;
+    const data = {
+      pageIndex: state.currentPageIndex,
+      paragraphIndex: state.currentParagraphIndex,
+      wordIndex: state.currentWordIndex
+    };
+    try {
+      localStorage.setItem(state.bookKey, JSON.stringify(data));
+    } catch (e) {
+      // se lo storage è pieno, amen
+      console.warn("Impossibile salvare i progressi:", e);
+    }
+  }
+
+  /* -------- UTIL -------- */
+
   function escapeHtml(str) {
     return String(str)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
+  }
+
+  function clamp(num, min, max) {
+    return Math.min(Math.max(num, min), max);
   }
 });
