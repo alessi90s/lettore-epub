@@ -356,7 +356,7 @@ body {
   justify-content: center;
 }
 
-/* ---------- RESPONSIVE / MOBILE FULL SCREEN ---------- */
+/* ---------- RESPONSIVE ---------- */
 
 @media (max-width: 900px) {
   .status {
@@ -388,12 +388,12 @@ body {
     max-width: 100%;
   }
 
-  /* comandi diventano pannello a scomparsa in basso */
+  /* comandi = pannello a scomparsa in basso, con transform */
   .controls-bar {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: -260px; /* nascosto */
+    bottom: 0;
     margin-bottom: 0;
     padding: 0.6rem 0.8rem 0.8rem;
     background: rgba(255, 255, 255, 0.97);
@@ -403,14 +403,15 @@ body {
     gap: 0.6rem;
     align-items: stretch;
     justify-content: flex-start;
-    transition: bottom 0.2s ease-out, opacity 0.2s ease-out;
+    transform: translateY(100%);
     opacity: 0;
     pointer-events: none;
+    transition: transform 0.22s ease-out, opacity 0.22s ease-out;
     z-index: 35;
   }
 
   .controls-bar.controls-open {
-    bottom: 0;
+    transform: translateY(0%);
     opacity: 1;
     pointer-events: auto;
   }
