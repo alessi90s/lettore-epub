@@ -1,4 +1,4 @@
-// Lettore EPUB con evidenziatore a pastello “fluido”
+// Lettore EPUB mobile-friendly con evidenziatore pastello
 
 const WELCOME_HTML = `
   <div class="placeholder">
@@ -21,10 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleAutoBtn = document.getElementById("toggleAuto");
   const speedRange = document.getElementById("speedRange");
   const speedValue = document.getElementById("speedValue");
+  const controlsBar = document.getElementById("controlsBar");
+  const fabControls = document.getElementById("fabControls");
 
-  // Slider velocità:
-  // 0 => 5000 ms (5s lentissimo)
-  // 100 => 200 ms (0,2s veloce)
+  // Slider velocità: 0 => 5 s, 100 => 0,2 s
   function sliderValueToMs(value) {
     const v = Math.max(0, Math.min(100, Number(value)));
     const slowMs = 5000;
@@ -41,12 +41,14 @@ document.addEventListener("DOMContentLoaded", () => {
     chunkSize: 4,
     autoTimerId: null,
     autoSpeedMs: sliderValueToMs(speedRange.value),
-    bookLoaded: false,
+    bookLoaded: false
   };
 
-  // --- Event listeners ---
+  /* -------- EVENTI UI -------- */
 
-  fileInput.addEventListener("change", handleFileChange);
+  if (fileInput) {
+    fileInput.addEventListener("change", handleFileChange);
+  }
 
   prevPageBtn.addEventListener("click", () => changePage(-1));
   nextPageBtn.addEventListener("click", () => changePage(1));
@@ -79,7 +81,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Barra spaziatrice = play/pausa
+  // FAB per aprire/chiudere i comandi su mobile
+  fabControls.addEventListener("click", () => {
+    const isOpen = controlsBar.classList.toggle("controls-open");
+    fabControls.textContent = isOpen ? "✕" : "☰";
+  });
+
+  // Chiudi pannello comandi quando si cambia pagina/parole in auto
+  function closeControlsPanel() {
+    if (controlsBar.classList.contains("controls-open")) {
+      controlsBar.classList.remove("controls-open");
+      fabControls.textContent = "☰";
+    }
+  }
+
+  // Barra spaziatrice = play/pausa (desktop)
   document.addEventListener("keydown", (e) => {
     if (e.code === "Space" && !e.target.closest("input")) {
       e.preventDefault();
@@ -92,7 +108,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- Funzioni principali ---
+  speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
+
+  /* -------- GESTIONE FILE -------- */
 
   async function handleFileChange(event) {
     const file = event.target.files && event.target.files[0];
@@ -102,6 +120,10 @@ document.addEventListener("DOMContentLoaded", () => {
     statusEl.textContent = `Caricamento di "${file.name}"...`;
 
     try {
+      if (typeof JSZip === "undefined") {
+        throw new Error("JSZip non è caricato. Controlla il tag <script> in index.html.");
+      }
+
       const arrayBuffer = await file.arrayBuffer();
       const paragraphs = await extractParagraphsFromEpub(arrayBuffer);
 
@@ -123,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>Messaggio: <code>${escapeHtml(err.message || String(err))}</code></p>
         </div>
       `;
-      statusEl.textContent = "Errore: impossibile leggere il file. Forse non è un EPUB valido.";
+      statusEl.textContent = "Errore: impossibile leggere il file.";
       state.bookLoaded = false;
       stopAuto();
     }
@@ -135,72 +157,43 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentPageIndex = 0;
     state.currentParagraphIndex = 0;
     state.currentWordIndex = 0;
-
     pageContainer.innerHTML = WELCOME_HTML;
     pageIndicator.textContent = "0 / 0";
   }
 
-  // Estrae i paragrafi dal file EPUB usando JSZip + XML
+  /**
+   * Estrae paragrafi:
+   * - apre zip con JSZip
+   * - prende tutti i .xhtml/.html (escluso nav.xhtml)
+   * - li ordina per nome
+   * - estrae body > p/div/li/h*
+   */
   async function extractParagraphsFromEpub(arrayBuffer) {
     const zip = await JSZip.loadAsync(arrayBuffer);
-
-    const containerFile = zip.file("META-INF/container.xml");
-    if (!containerFile) {
-      throw new Error("File META-INF/container.xml non trovato (EPUB non valido?).");
-    }
-
     const parser = new DOMParser();
-    const containerText = await containerFile.async("string");
-    const containerDoc = parser.parseFromString(containerText, "application/xml");
-
-    const rootfileEl = containerDoc.querySelector("rootfile");
-    if (!rootfileEl) {
-      throw new Error("rootfile non trovato nel container.xml.");
-    }
-
-    const opfPath = rootfileEl.getAttribute("full-path");
-    if (!opfPath) {
-      throw new Error("Percorso OPF non valido.");
-    }
-
-    const opfFile = zip.file(opfPath);
-    if (!opfFile) {
-      throw new Error(`File OPF non trovato: ${opfPath}`);
-    }
-
-    const opfText = await opfFile.async("string");
-    const opfDoc = parser.parseFromString(opfText, "application/xml");
-
-    const manifestItems = {};
-    opfDoc.querySelectorAll("manifest > item").forEach((item) => {
-      const id = item.getAttribute("id");
-      const href = item.getAttribute("href");
-      const mediaType = item.getAttribute("media-type") || "";
-      if (id && href && mediaType.includes("html")) {
-        manifestItems[id] = href;
-      }
-    });
-
-    const spineHrefs = [];
-    opfDoc.querySelectorAll("spine > itemref").forEach((ref) => {
-      const idref = ref.getAttribute("idref");
-      if (idref && manifestItems[idref]) {
-        spineHrefs.push(manifestItems[idref]);
-      }
-    });
-
-    if (!spineHrefs.length) {
-      throw new Error("Spine vuota: nessun capitolo da leggere.");
-    }
-
     const paragraphs = [];
-    for (const href of spineHrefs) {
-      const fullPath = resolveItemPath(opfPath, href);
-      const chapterFile = zip.file(fullPath);
-      if (!chapterFile) continue;
+    const htmlPaths = [];
 
-      const xhtml = await chapterFile.async("string");
-      const doc = parser.parseFromString(xhtml, "application/xhtml+xml");
+    zip.forEach((relativePath, file) => {
+      if (file.dir) return;
+      if (/nav\.x?html$/i.test(relativePath)) return;
+      if (/\.(xhtml|html)$/i.test(relativePath)) {
+        htmlPaths.push(relativePath);
+      }
+    });
+
+    if (!htmlPaths.length) {
+      throw new Error("Nessun capitolo HTML trovato nello zip.");
+    }
+
+    htmlPaths.sort();
+
+    for (const path of htmlPaths) {
+      const file = zip.file(path);
+      if (!file) continue;
+
+      const xhtml = await file.async("string");
+      const doc = parser.parseFromString(xhtml, "text/html");
       const body = doc.querySelector("body");
       if (!body) continue;
 
@@ -216,14 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return paragraphs;
   }
 
-  function resolveItemPath(opfPath, href) {
-    const baseDir = opfPath.includes("/")
-      ? opfPath.slice(0, opfPath.lastIndexOf("/") + 1)
-      : "";
-    const fakeBase = "http://example.com/" + baseDir;
-    const url = new URL(href, fakeBase);
-    return url.pathname.replace(/^\/+/, "");
-  }
+  /* -------- PAGINAZIONE -------- */
 
   function buildPages(paragraphs) {
     const CHARS_PER_PAGE = 1500;
@@ -279,6 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pageContainer.appendChild(fragment);
     setActiveParagraph(0);
     updatePageIndicator();
+    closeControlsPanel();
   }
 
   function updatePageIndicator() {
@@ -291,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!state.pages.length) return;
     const newIndex = state.currentPageIndex + direction;
     if (newIndex < 0 || newIndex >= state.pages.length) return;
-
     stopAuto();
     renderPage(newIndex);
   }
@@ -307,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Highlight fluido + frasi -------------------------------------------------
+  /* -------- EVIDENZIATORE -------- */
 
   function getSentenceBoundaries(words) {
     const sentenceStarts = [0];
@@ -489,8 +475,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateWordHighlight();
   }
 
-  // --- Auto evidenziatore ---
-
   function startAuto() {
     stopAuto();
     state.autoTimerId = setInterval(advanceChunk, state.autoSpeedMs);
@@ -513,7 +497,4 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
   }
-
-  // etichetta iniziale velocità
-  speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
 });
