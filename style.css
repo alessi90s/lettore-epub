@@ -6,7 +6,7 @@
 
 :root {
   --bg-body: radial-gradient(circle at top, #fdfcfb 0%, #e7e4ff 40%, #ffd9e6 100%);
-  --bg-book: #ffffff; /* quaderno bianco */
+  --bg-book: #ffffff;
   --border-soft: rgba(0, 0, 0, 0.06);
   --text-main: #222222;
   --accent: #6650ff;
@@ -35,7 +35,6 @@ body {
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg-body);
-  color: --text-main;
   color: var(--text-main);
   display: flex;
   flex-direction: column;
@@ -243,11 +242,11 @@ body {
   min-width: 0;
 }
 
-/* Quaderno: più stretto e vicino al testo */
+/* Quaderno più stretto */
 
 .book-page {
   width: 100%;
-  max-width: 560px;          /* più stretto di prima */
+  max-width: 560px;
   max-height: 80vh;
   background-color: var(--bg-book);
   margin: 0 auto;
@@ -270,9 +269,9 @@ body {
 }
 
 .page-inner {
-  max-width: 40ch;           /* colonna testo più stretta */
+  max-width: 40ch;
   margin: 0 auto;
-  padding-left: 32px;        /* dopo il margine rosso */
+  padding-left: 32px;
 }
 
 /* Footer sotto al quaderno */
@@ -291,11 +290,11 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-/* Placeholder iniziale (Benvenuto) */
+/* Placeholder “Benvenuto” */
 
 .placeholder {
-  margin-top: 0;               /* niente spazio enorme sopra */
-  text-align: left;            /* testo come una pagina vera */
+  margin-top: 0;
+  text-align: left;
   line-height: 1.5;
 }
 
@@ -310,11 +309,11 @@ body {
   font-size: 0.9rem;
 }
 
-/* Testo libro – line-height allineata alle righe */
+/* Testo libro – allineato alle righe */
 
 .book-paragraph {
-  font-size: 1rem;                 /* 16px */
-  line-height: 1.5;                /* 24px = var(--line-step) */
+  font-size: 1rem;
+  line-height: 1.5; /* 24px */
   margin: 0.85rem 0;
   color: #262626;
   padding-left: 0.5rem;
