@@ -198,12 +198,6 @@ body {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
 }
 
-/* Slider velocità */
-
-#speedRange {
-  width: 130px;
-}
-
 /* Area libro centrata */
 
 .book-area {
