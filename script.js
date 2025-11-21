@@ -1,4 +1,5 @@
-// Lettore EPUB mobile-friendly con evidenziatore pastello + salvataggio progressi + auto-scroll
+// Lettore EPUB con evidenziatore pastello, salvataggio progressi, auto-scroll
+// + font / dimensione testo / colore evidenziatore regolabili
 
 const WELCOME_HTML = `
   <div class="placeholder">
@@ -26,12 +27,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const fabControls = document.getElementById("fabControls");
   const autoScrollToggle = document.getElementById("autoScrollToggle");
 
+  const fontDownBtn = document.getElementById("fontDown");
+  const fontUpBtn = document.getElementById("fontUp");
+  const fontSizeValueEl = document.getElementById("fontSizeValue");
+  const fontSelect = document.getElementById("fontSelect");
+  const highlightPicker = document.getElementById("highlightPicker");
+
   if (!pageContainer || !pageIndicator || !statusEl) {
     console.error("Elementi base mancanti, controlla index.html");
     return;
   }
 
-  // Slider virtuale: 0 => 5 s, 100 => 0,2 s
+  // --- costanti per velocità auto ---
   const SPEED_MIN = 0;
   const SPEED_MAX = 100;
   const SPEED_STEP = 10;
@@ -45,6 +52,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return Math.round(slowMs - (slowMs - fastMs) * t);
   }
 
+  // --- costanti per font / dimensione ---
+  const DEFAULT_FONT_SIZE_PX = 18;
+  const MIN_FONT_SIZE_PX = 14;
+  const MAX_FONT_SIZE_PX = 26;
+
+  const SETTINGS_KEY = "epub-reader-settings-v1";
+
+  const FONT_STACKS = {
+    system: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    serif: "'Georgia', 'Times New Roman', serif",
+    merriweather: "'Merriweather', 'Georgia', serif",
+    inter: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+  };
+
   const state = {
     pages: [],
     currentPageIndex: 0,
@@ -56,15 +77,101 @@ document.addEventListener("DOMContentLoaded", () => {
     autoSpeedMs: sliderValueToMs(SPEED_DEFAULT),
     bookLoaded: false,
     bookKey: null,
-    autoScrollEnabled: true
+    autoScrollEnabled: true,
+    fontSizePx: DEFAULT_FONT_SIZE_PX,
+    highlightColor: "#ffef7d",
+    fontFamilyKey: "system"
   };
+
+  // --- applicazione impostazioni UI globali ---
+
+  function applyFontSize(px, skipSave) {
+    let val = Number(px);
+    if (!Number.isFinite(val)) val = DEFAULT_FONT_SIZE_PX;
+    val = Math.max(MIN_FONT_SIZE_PX, Math.min(MAX_FONT_SIZE_PX, val));
+    state.fontSizePx = val;
+    const lineStep = Math.round(val * 1.6);
+
+    document.documentElement.style.setProperty("--book-font-size-px", val + "px");
+    document.documentElement.style.setProperty("--line-step", lineStep + "px");
+
+    if (fontSizeValueEl) {
+      fontSizeValueEl.textContent = val + " px";
+    }
+    if (!skipSave) saveSettings();
+  }
+
+  function applyHighlightColor(color, skipSave) {
+    if (typeof color !== "string") return;
+    // accetto sia #rgb che #rrggbb
+    if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color)) return;
+    state.highlightColor = color;
+    document.documentElement.style.setProperty("--highlight-word", color);
+    if (highlightPicker) {
+      highlightPicker.value = color;
+    }
+    if (!skipSave) saveSettings();
+  }
+
+  function applyFontFamily(key, skipSave) {
+    const stack = FONT_STACKS[key] || FONT_STACKS.system;
+    state.fontFamilyKey = key in FONT_STACKS ? key : "system";
+    document.documentElement.style.setProperty("--book-font-family", stack);
+    if (fontSelect) {
+      fontSelect.value = state.fontFamilyKey;
+    }
+    if (!skipSave) saveSettings();
+  }
 
   function updateSpeedLabel() {
     if (speedValue) {
       speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
     }
   }
-  updateSpeedLabel();
+
+  // --- caricamento impostazioni salvate ---
+
+  (function loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) {
+        applyFontFamily("system", true);
+        applyFontSize(DEFAULT_FONT_SIZE_PX, true);
+        applyHighlightColor("#ffef7d", true);
+        updateSpeedLabel();
+        return;
+      }
+      const s = JSON.parse(raw);
+      if (s.fontFamilyKey) applyFontFamily(s.fontFamilyKey, true);
+      else applyFontFamily("system", true);
+
+      if (s.fontSizePx) applyFontSize(s.fontSizePx, true);
+      else applyFontSize(DEFAULT_FONT_SIZE_PX, true);
+
+      if (s.highlightColor) applyHighlightColor(s.highlightColor, true);
+      else applyHighlightColor("#ffef7d", true);
+    } catch {
+      applyFontFamily("system", true);
+      applyFontSize(DEFAULT_FONT_SIZE_PX, true);
+      applyHighlightColor("#ffef7d", true);
+    }
+
+    state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
+    updateSpeedLabel();
+  })();
+
+  function saveSettings() {
+    const data = {
+      fontSizePx: state.fontSizePx,
+      highlightColor: state.highlightColor,
+      fontFamilyKey: state.fontFamilyKey
+    };
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.warn("Impossibile salvare impostazioni lettore:", e);
+    }
+  }
 
   /* -------- EVENTI UI -------- */
 
@@ -134,6 +241,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Font size A-/A+
+  if (fontDownBtn) {
+    fontDownBtn.addEventListener("click", () => {
+      applyFontSize(state.fontSizePx - 2);
+    });
+  }
+  if (fontUpBtn) {
+    fontUpBtn.addEventListener("click", () => {
+      applyFontSize(state.fontSizePx + 2);
+    });
+  }
+
+  // font select
+  if (fontSelect) {
+    fontSelect.value = state.fontFamilyKey;
+    fontSelect.addEventListener("change", (e) => {
+      applyFontFamily(e.target.value);
+    });
+  }
+
+  // highlight color picker
+  if (highlightPicker) {
+    highlightPicker.value = state.highlightColor;
+    highlightPicker.addEventListener("input", (e) => {
+      applyHighlightColor(e.target.value);
+    });
+  }
+
   // FAB per aprire/chiudere i comandi su mobile
   if (fabControls && controlsBar) {
     fabControls.addEventListener("click", () => {
@@ -144,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Barra spaziatrice = play/pausa (desktop)
   document.addEventListener("keydown", (e) => {
-    if (e.code === "Space" && !e.target.closest("input")) {
+    if (e.code === "Space" && !e.target.closest("input") && !e.target.closest("select")) {
       e.preventDefault();
       if (!state.bookLoaded || !toggleAutoBtn) return;
       if (state.autoTimerId) {
