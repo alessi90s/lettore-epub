@@ -1,5 +1,14 @@
 // Lettore EPUB con evidenziatore a pastello “fluido”
 
+const WELCOME_HTML = `
+  <div class="placeholder">
+    <h1>Benvenuto 👋</h1>
+    <p>Carica un file <strong>.epub</strong> dal pulsante in alto per iniziare a leggere.</p>
+    <p>Il paragrafo che stai leggendo verrà illuminato,
+       con <strong>4 parole alla volta</strong> evidenziate con un effetto evidenziatore pastello.</p>
+  </div>
+`;
+
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("fileInput");
   const statusEl = document.getElementById("status");
@@ -28,8 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
     pages: [],
     currentPageIndex: 0,
     currentParagraphIndex: 0,
-    currentWordIndex: 0,   // indice della prima parola evidenziata
-    chunkSize: 4,          // quante parole max evidenziare
+    currentWordIndex: 0,
+    chunkSize: 4,
     autoTimerId: null,
     autoSpeedMs: sliderValueToMs(speedRange.value),
     bookLoaded: false,
@@ -66,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.autoSpeedMs = sliderValueToMs(rawVal);
     speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
     if (state.autoTimerId) {
-      startAuto(); // riavvia con la nuova velocità
+      startAuto();
     }
   });
 
@@ -108,12 +117,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       console.error(err);
       pageContainer.innerHTML = `
-        <div class="page-inner">
-          <div class="placeholder">
-            <h1>Errore di lettura ⚠️</h1>
-            <p>Non sono riuscito a leggere questo EPUB.</p>
-            <p>Messaggio: <code>${escapeHtml(err.message || String(err))}</code></p>
-          </div>
+        <div class="placeholder">
+          <h1>Errore di lettura ⚠️</h1>
+          <p>Non sono riuscito a leggere questo EPUB.</p>
+          <p>Messaggio: <code>${escapeHtml(err.message || String(err))}</code></p>
         </div>
       `;
       statusEl.textContent = "Errore: impossibile leggere il file. Forse non è un EPUB valido.";
@@ -129,17 +136,8 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentParagraphIndex = 0;
     state.currentWordIndex = 0;
 
-    pageContainer.innerHTML = `
-      <div class="page-inner">
-        <div class="placeholder">
-          <h1>Benvenuto 👋</h1>
-          <p>Carica un file <strong>.epub</strong> dal pulsante in alto per iniziare a leggere.</p>
-          <p>Il paragrafo che stai leggendo verrà illuminato, con <strong>4 parole alla volta</strong> evidenziate con un effetto evidenziatore pastello.</p>
-        </div>
-      </div>
-    `;
-
-    pageIndicator.textContent = `0 / 0`;
+    pageContainer.innerHTML = WELCOME_HTML;
+    pageIndicator.textContent = "0 / 0";
   }
 
   // Estrae i paragrafi dal file EPUB usando JSZip + XML
@@ -261,8 +259,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const paras = state.pages[pageIndex];
 
-    pageContainer.innerHTML = `<div class="page-inner"></div>`;
-    const inner = pageContainer.querySelector(".page-inner");
+    pageContainer.innerHTML = "";
+    const fragment = document.createDocumentFragment();
 
     paras.forEach((text, idx) => {
       const p = document.createElement("p");
@@ -275,9 +273,10 @@ document.addEventListener("DOMContentLoaded", () => {
         setActiveParagraph(idx);
       });
 
-      inner.appendChild(p);
+      fragment.appendChild(p);
     });
 
+    pageContainer.appendChild(fragment);
     setActiveParagraph(0);
     updatePageIndicator();
   }
