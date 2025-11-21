@@ -1,1207 +1,413 @@
-/* style.css */
-
-/* Reset CSS */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-/* Temi */
-body.classic {
-    background-color: #f5f5f5;
-    color: #333;
+:root {
+  --bg-body: radial-gradient(circle at top, #fdfcfb 0%, #e7e4ff 40%, #ffd9e6 100%);
+  --bg-book: #fdf7ec;
+  --border-soft: rgba(0, 0, 0, 0.06);
+  --text-main: #222222;
+  --accent: #6650ff;
+  --accent-soft: rgba(102, 80, 255, 0.1);
+  --highlight-soft: rgba(255, 247, 207, 0.9);
+  --highlight-word-start: #ffeaa7;
+  --highlight-word-end: #ffd1e3;
+  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
+  --radius-lg: 18px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
+  --transition-fast: 0.18s ease-out;
 }
 
-body.sepia {
-    background-color: #f4ecd8;
-    color: #5b4636;
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
-body.night {
-    background-color: #2e2e2e;
-    color: #f5f5f5;
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg-body);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
 }
 
-/* Header */
-header {
-    background-color: transparent;
-    padding: 20px;
-    text-align: center;
-    position: relative; /* Per posizionare il toggle button */
+/* Top bar */
+
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1.3rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06);
 }
 
-header h1 {
-    margin: 0;
-    font-family: 'Georgia', serif;
-    font-size: 2em;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
-/* Contenitore per le barre dei controlli in alto */
-#controls-container {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+.logo-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6650ff, #ff69b4);
+  box-shadow: 0 0 12px rgba(255, 105, 180, 0.7);
+}
+
+.brand-text {
+  font-size: 0.98rem;
+}
+
+.file-label {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  padding: 0.35rem 0.95rem;
+  background: var(--accent-soft);
+  border: 1px solid rgba(102, 80, 255, 0.3);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.file-label input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.status {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: #555;
+  max-width: 40%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Layout principale */
+
+.reader-layout {
+  flex: 1;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  min-height: 0;
+}
+
+/* Colonna controlli */
+
+.controls {
+  width: 260px;
+  max-width: 35%;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 0.9rem 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.controls h2 {
+  font-size: 0.96rem;
+  margin: 0 0 0.4rem;
+}
+
+.controls-group {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.55rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.controls-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* Bottoni */
+
+.btn {
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0.35rem 0.8rem;
+  font-size: 0.82rem;
+  background: #f8f7ff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  transition: background var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.btn:hover {
+  background: #efecff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6650ff, #ff69b4);
+  color: #fff;
+  border-color: transparent;
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.1rem;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5942ff, #ff4d9d);
+}
+
+.btn-primary.active {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.btn-ghost {
+  background: #ffffff;
+}
+
+/* Slider velocità */
+
+#speedRange {
+  width: 100%;
+}
+
+.speed-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #777;
+}
+
+#speedValue {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Hint */
+
+.hint {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  color: #555;
+}
+
+/* Area libro */
+
+.book-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.book-page {
+  flex: 1;
+  width: 100%;
+  max-width: 900px;
+  background: var(--bg-book);
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  position: relative;
+}
+
+.page-inner {
+  max-width: 60ch;
+  margin: 0 auto;
+}
+
+.page-footer {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: #555;
+  text-align: center;
+}
+
+.page-footer-text {
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* Placeholder iniziale */
+
+.placeholder {
+  text-align: center;
+  margin-top: 20%;
+}
+
+.placeholder h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.3rem;
+}
+
+.placeholder p {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+}
+
+/* Testo libro */
+
+.book-paragraph {
+  line-height: 1.7;
+  margin: 0.85rem 0;
+  font-size: 1rem;
+  color: #262626;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  padding: 0.1rem 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.book-paragraph:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.book-paragraph.active-paragraph {
+  background: linear-gradient(135deg, rgba(255, 247, 210, 0.95), rgba(255, 255, 255, 0.7));
+  box-shadow: 0 0 0 1px rgba(255, 220, 150, 0.5), 0 8px 18px rgba(0, 0, 0, 0.08);
+  padding: 0.25rem 0.7rem;
+  transform: translateY(-1px);
+}
+
+/* Parole & evidenziatore pastello */
+
+.book-paragraph .word {
+  display: inline;
+  white-space: pre;
+}
+
+.word-highlight {
+  background: linear-gradient(
+    120deg,
+    var(--highlight-word-start),
+    var(--highlight-word-end)
+  );
+  border-radius: 0.22em;
+  padding: 0 0.04em;
+  box-shadow: 0 0 0.55em rgba(255, 205, 150, 0.9);
+}
+
+/* Indicatore pagina */
+
+.page-indicator {
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+/* Scrollbar carina */
+
+.book-page::-webkit-scrollbar {
+  width: 8px;
+}
+
+.book-page::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 999px;
+}
+
+.book-page::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .reader-layout {
+    flex-direction: column;
+  }
+
+  .controls {
     width: 100%;
-    background-color: rgba(255, 255, 255, 0.95);
-    transition: background-color 0.3s ease;
-    padding-top: 10px; /* Spazio per il toggle button */
+    max-width: 100%;
+    order: 2;
+  }
+
+  .book-area {
+    order: 1;
+  }
+
+  .book-page {
+    padding: 1.1rem 1.2rem;
+    border-radius: 14px;
+  }
+
+  .page-inner {
+    max-width: 100%;
+  }
+
+  .status {
+    display: none;
+  }
 }
 
-/* Cambiamenti di colore per i temi */
-body.night #controls-container {
-    background-color: rgba(46, 46, 46, 0.95);
-}
-
-body.sepia #controls-container {
-    background-color: rgba(244, 236, 216, 0.95);
-}
-
-/* Pulsante per mostrare/nascondere i controlli su mobile */
-.toggle-controls {
-    display: none; /* Nascondi di default, mostra solo su mobile */
-    position: absolute;
-    top: 10px;
-    left: 10px; /* Spostato a sinistra per evitare sovrapposizione */
-    background: none;
-    border: none;
-    font-size: 1.5em;
-    cursor: pointer;
-    padding: 10px;
-    color: inherit;
-    transition: color 0.3s ease;
-}
-
-.toggle-controls:hover {
-    color: #007BFF;
-}
-
-/* Prima riga di controlli */
-#controls-top,
-#controls-top-second-row,
-#playback-controls {
-    display: flex;
+@media (max-width: 600px) {
+  .top-bar {
     flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    padding: 5px;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
-}
+    row-gap: 0.4rem;
+  }
 
-/* Controlli inizialmente visibili */
-#controls-container .controls {
-    max-height: 1000px; /* Altezza massima per evitare problemi di animazione */
-    opacity: 1;
-    visibility: visible;
-}
+  .brand-text {
+    font-size: 0.9rem;
+  }
 
-/* Stili quando i controlli sono nascosti */
-#controls-container.active .controls {
-    max-height: 1000px; /* Altezza massima sufficiente */
-    opacity: 1;
-    visibility: visible;
-}
+  .controls-group {
+    padding: 0.5rem 0.5rem;
+  }
 
-/* Nascondi i controlli di default su mobile */
-@media (max-width: 768px) {
-    /* Mostra il pulsante di toggle */
-    .toggle-controls {
-        display: block;
-    }
-
-    /* Nascondi i controlli per default */
-    #controls-container .controls {
-        max-height: 0;
-        opacity: 0;
-        visibility: hidden;
-        overflow: hidden;
-    }
-
-    /* Quando i controlli sono visibili */
-    #controls-container.active .controls {
-        max-height: 1000px; /* Altezza massima sufficiente */
-        opacity: 1;
-        visibility: visible;
-    }
-
-    /* Disporre i controlli in colonne */
-    #controls-top,
-    #controls-top-second-row,
-    #playback-controls {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    /* Ridurre la dimensione dei pulsanti */
-    #controls-top button,
-    #controls-top-second-row button,
-    #playback-controls button {
-        padding: 10px 14px;
-        margin: 4px 0;
-        font-size: 1.2em;
-    }
-
-    /* Ridurre la dimensione dei selettori */
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        width: 80%;
-        margin: 4px 0;
-    }
-
-    /* Ottimizzare il reader per schermi piccoli */
-    #reader {
-        padding: 20px;
-        margin: 10px auto;
-        max-width: 100%;
-    }
-
-    /* Ridurre il font del reader */
-    #reader-content {
-        font-size: 16px;
-    }
-
-    /* Pulsanti playback più grandi */
-    #playback-controls button {
-        font-size: 2em;
-        padding: 16px 24px;
-    }
-}
-
-/* Ulteriori adattamenti per schermi molto piccoli */
-@media (max-width: 480px) {
-    header h1 {
-        font-size: 1.5em;
-    }
-
-    /* Ottimizzare i pulsanti di playback */
-    #playback-controls button {
-        font-size: 2.5em;
-        padding: 20px 28px;
-    }
-
-    /* Adattare ulteriormente il layout */
-    #controls-top,
-    #controls-top-second-row,
-    #playback-controls,
-    #controls-bottom {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    /* Aumentare la larghezza dei selettori */
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        width: 100%;
-    }
-
-    /* Ottimizzare ulteriormente il reader */
-    #reader-content {
-        font-size: 14px;
-    }
-}
-
-/* Spacing tra gli elementi */
-#controls-top > *,
-#controls-top-second-row > * {
-    margin: 2px 4px;
-}
-
-/* Pulsanti */
-#controls-top button,
-#controls-top-second-row button,
-#playback-controls button {
-    padding: 12px 16px;
-    margin: 4px;
-    font-size: 1em;
-    cursor: pointer;
-    border: none;
-    background-color: transparent;
-    color: inherit;
-    transition: color 0.3s ease, background-color 0.3s ease;
-    border-radius: 4px;
-}
-
-#controls-top button i,
-#controls-top-second-row button i,
-#playback-controls button i {
-    font-size: 1em;
-}
-
-#controls-top button:hover,
-#controls-top-second-row button:hover,
-#playback-controls button:hover {
-    color: #007BFF;
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-/* Selettori */
-#controls-top select,
-#controls-top-second-row select {
-    padding: 8px;
-    margin: 2px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.night #controls-top select,
-body.night #controls-top-second-row select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-body.sepia #controls-top select,
-body.sepia #controls-top-second-row select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
-}
-
-/* Etichette e span */
-#controls-top label,
-#controls-top-second-row label,
-#playback-controls label {
-    margin: 0 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-}
-
-#controls-top span,
-#controls-top-second-row span {
-    margin: 0 5px;
-    min-width: 30px;
-    text-align: center;
-    display: inline-block;
-    font-size: 0.9em;
-}
-
-/* Pulsanti playback (PLAY, PAUSA, STOP) più grandi */
-#playback-controls button {
-    font-size: 1.5em;
-    padding: 12px 20px;
-    margin: 5px;
-    border: 1px solid #ccc;
-}
-
-#playback-controls button i {
-    font-size: 1em;
-}
-
-/* Pulsante di selezione file personalizzato */
-.custom-file-upload {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    background-color: transparent;
-    color: inherit;
-}
-
-.custom-file-upload:hover {
-    background-color: #007BFF;
-    color: white;
-}
-
-#epubFile {
-    display: none;
-}
-
-/* Il reader */
-#reader {
-    padding: 40px;
-    margin: 20px auto;
-    max-width: 800px;
-    overflow-y: auto;
-    position: relative;
-    font-size: 18px;
-    font-family: 'Georgia', serif;
-    line-height: var(--line-height, 28.8px);
-    /* Sfondo a righe del quaderno */
-    background: repeating-linear-gradient(
-        white,
-        white calc(var(--line-height) - 1px),
-        #e6e6e6 calc(var(--line-height) - 1px),
-        #e6e6e6 var(--line-height)
-    );
-    /* Mantieni lo sfondo fisso durante lo spostamento del testo */
-    background-attachment: scroll;
-}
-
-/* Temi per il reader */
-body.sepia #reader {
-    background: repeating-linear-gradient(
-        #f4ecd8,
-        #f4ecd8 calc(var(--line-height) - 1px),
-        #e0d7c6 calc(var(--line-height) - 1px),
-        #e0d7c6 var(--line-height)
-    );
-}
-
-body.night #reader {
-    background: repeating-linear-gradient(
-        #2e2e2e,
-        #2e2e2e calc(var(--line-height) - 1px),
-        #424242 calc(var(--line-height) - 1px),
-        #424242 var(--line-height)
-    );
-}
-
-#reader img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 10px auto;
-}
-
-/* Contenuto del reader che verrà spostato */
-#reader-content {
-    transform: translateY(0px);
-    transition: transform 0.2s ease;
-}
-
-/* Stili per le parole */
-.word {
-    display: inline;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    white-space: normal; /* Assicurarsi che lo spazio bianco venga gestito correttamente */
-}
-
-/* Evidenziazione */
-.word.highlight {
-    background-color: var(--highlight-color) !important;
-}
-
-/* Spinner di caricamento */
-#spinner {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1.5em;
-}
-
-body.classic #spinner {
-    color: #555;
-}
-
-body.sepia #spinner {
-    color: #5b4636;
-}
-
-body.night #spinner {
-    color: #f5f5f5;
-}
-
-/* Barra dei controlli in basso per l'indice */
-#controls-bottom {
-    position: sticky;
-    bottom: 0;
+  .btn {
     width: 100%;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 5px;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    z-index: 1000;
-    transition: background-color 0.3s ease;
-}
-
-body.night #controls-bottom {
-    background-color: rgba(46, 46, 46, 0.95);
-}
-
-body.sepia #controls-bottom {
-    background-color: rgba(244, 236, 216, 0.95);
-}
-
-#controls-bottom select {
-    padding: 8px;
-    margin: 2px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.night #controls-bottom select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-body.sepia #controls-bottom select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
-}
-
-/* Line Breaks dopo i punti */
-br {
-    display: block;
-    content: "";
-    margin: 0;
-    padding: 0;
-}
-
-/* Scrolling del reader per allineare il testo */
-#reader {
-    scroll-behavior: smooth;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-    /* Adattamenti per tablet */
-    #reader {
-        padding: 30px;
-        margin: 15px auto;
-        max-width: 90%;
-    }
-
-    #controls-top button,
-    #controls-top-second-row button,
-    #playback-controls button {
-        padding: 10px 14px;
-        margin: 3px;
-    }
-
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        padding: 6px;
-        margin: 2px;
-    }
-}
-
-@media (max-width: 768px) {
-    /* Mostra il pulsante di toggle */
-    .toggle-controls {
-        display: block;
-    }
-
-    /* Nascondi i controlli per default */
-    #controls-container .controls {
-        max-height: 0;
-        opacity: 0;
-        visibility: hidden;
-        overflow: hidden;
-    }
-
-    /* Quando i controlli sono visibili */
-    #controls-container.active .controls {
-        max-height: 1000px; /* Altezza massima sufficiente */
-        opacity: 1;
-        visibility: visible;
-    }
-
-    /* Disporre i controlli in colonne */
-    #controls-top,
-    #controls-top-second-row,
-    #playback-controls {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    /* Ridurre la dimensione dei pulsanti */
-    #controls-top button,
-    #controls-top-second-row button,
-    #playback-controls button {
-        padding: 10px 14px;
-        margin: 4px 0;
-        font-size: 1.2em;
-    }
-
-    /* Ridurre la dimensione dei selettori */
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        width: 80%;
-        margin: 4px 0;
-    }
-
-    /* Ottimizzare il reader per schermi piccoli */
-    #reader {
-        padding: 20px;
-        margin: 10px auto;
-        max-width: 100%;
-    }
-
-    /* Ridurre il font del reader */
-    #reader-content {
-        font-size: 16px;
-    }
-
-    /* Pulsanti playback più grandi */
-    #playback-controls button {
-        font-size: 2em;
-        padding: 16px 24px;
-    }
-}
-
-@media (max-width: 480px) {
-    header h1 {
-        font-size: 1.5em;
-    }
-
-    /* Ottimizzare i pulsanti di playback */
-    #playback-controls button {
-        font-size: 2.5em;
-        padding: 20px 28px;
-    }
-
-    /* Adattare ulteriormente il layout */
-    #controls-top,
-    #controls-top-second-row,
-    #playback-controls,
-    #controls-bottom {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    /* Aumentare la larghezza dei selettori */
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        width: 100%;
-    }
-
-    /* Ottimizzare ulteriormente il reader */
-    #reader-content {
-        font-size: 14px;
-    }
-}
-
-/* Spacing tra gli elementi */
-#controls-top > *,
-#controls-top-second-row > * {
-    margin: 2px 4px;
-}
-
-/* Pulsanti */
-#controls-top button,
-#controls-top-second-row button,
-#playback-controls button {
-    padding: 12px 16px;
-    margin: 4px;
-    font-size: 1em;
-    cursor: pointer;
-    border: none;
-    background-color: transparent;
-    color: inherit;
-    transition: color 0.3s ease, background-color 0.3s ease;
-    border-radius: 4px;
-}
-
-#controls-top button i,
-#controls-top-second-row button i,
-#playback-controls button i {
-    font-size: 1em;
-}
-
-#controls-top button:hover,
-#controls-top-second-row button:hover,
-#playback-controls button:hover {
-    color: #007BFF;
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-/* Selettori */
-#controls-top select,
-#controls-top-second-row select {
-    padding: 8px;
-    margin: 2px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.night #controls-top select,
-body.night #controls-top-second-row select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-body.sepia #controls-top select,
-body.sepia #controls-top-second-row select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
-}
-
-/* Etichette e span */
-#controls-top label,
-#controls-top-second-row label,
-#playback-controls label {
-    margin: 0 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-}
-
-#controls-top span,
-#controls-top-second-row span {
-    margin: 0 5px;
-    min-width: 30px;
-    text-align: center;
-    display: inline-block;
-    font-size: 0.9em;
-}
-
-/* Pulsanti playback (PLAY, PAUSA, STOP) più grandi */
-#playback-controls button {
-    font-size: 1.5em;
-    padding: 12px 20px;
-    margin: 5px;
-    border: 1px solid #ccc;
-}
-
-#playback-controls button i {
-    font-size: 1em;
-}
-
-/* Pulsante di selezione file personalizzato */
-.custom-file-upload {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    background-color: transparent;
-    color: inherit;
-}
-
-.custom-file-upload:hover {
-    background-color: #007BFF;
-    color: white;
-}
-
-#epubFile {
-    display: none;
-}
-
-/* Il reader */
-#reader {
-    padding: 40px;
-    margin: 20px auto;
-    max-width: 800px;
-    overflow-y: auto;
-    position: relative;
-    font-size: 18px;
-    font-family: 'Georgia', serif;
-    line-height: var(--line-height, 28.8px);
-    /* Sfondo a righe del quaderno */
-    background: repeating-linear-gradient(
-        white,
-        white calc(var(--line-height) - 1px),
-        #e6e6e6 calc(var(--line-height) - 1px),
-        #e6e6e6 var(--line-height)
-    );
-    /* Mantieni lo sfondo fisso durante lo spostamento del testo */
-    background-attachment: scroll;
-}
-
-/* Temi per il reader */
-body.sepia #reader {
-    background: repeating-linear-gradient(
-        #f4ecd8,
-        #f4ecd8 calc(var(--line-height) - 1px),
-        #e0d7c6 calc(var(--line-height) - 1px),
-        #e0d7c6 var(--line-height)
-    );
-}
-
-body.night #reader {
-    background: repeating-linear-gradient(
-        #2e2e2e,
-        #2e2e2e calc(var(--line-height) - 1px),
-        #424242 calc(var(--line-height) - 1px),
-        #424242 var(--line-height)
-    );
-}
-
-#reader img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 10px auto;
-}
-
-/* Contenuto del reader che verrà spostato */
-#reader-content {
-    transform: translateY(0px);
-    transition: transform 0.2s ease;
-}
-
-/* Stili per le parole */
-.word {
-    display: inline;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    white-space: normal; /* Assicurarsi che lo spazio bianco venga gestito correttamente */
-}
-
-/* Evidenziazione */
-.word.highlight {
-    background-color: var(--highlight-color) !important;
-}
-
-/* Spinner di caricamento */
-#spinner {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1.5em;
-}
-
-body.classic #spinner {
-    color: #555;
-}
-
-body.sepia #spinner {
-    color: #5b4636;
-}
-
-body.night #spinner {
-    color: #f5f5f5;
-}
-
-/* Barra dei controlli in basso per l'indice */
-#controls-bottom {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    transition: background-color 0.3s ease;
-}
-
-body.night #controls-bottom {
-    background-color: rgba(46, 46, 46, 0.95);
-}
-
-body.sepia #controls-bottom select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
-}
-
-body.night #controls-bottom select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-#controls-bottom select {
-    padding: 8px;
-    margin: 2px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Line Breaks dopo i punti */
-br {
-    display: block;
-    content: "";
-    margin: 0;
-    padding: 0;
-}
-
-/* Scrolling del reader per allineare il testo */
-#reader {
-    scroll-behavior: smooth;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-    /* Adattamenti per tablet */
-    #reader {
-        padding: 30px;
-        margin: 15px auto;
-        max-width: 90%;
-    }
-
-    #controls-top button,
-    #controls-top-second-row button,
-    #playback-controls button {
-        padding: 10px 14px;
-        margin: 3px;
-    }
-
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        padding: 6px;
-        margin: 2px;
-    }
-}
-
-@media (max-width: 768px) {
-    /* Mostra il pulsante di toggle */
-    .toggle-controls {
-        display: block;
-    }
-
-    /* Nascondi i controlli per default */
-    #controls-container .controls {
-        max-height: 0;
-        opacity: 0;
-        visibility: hidden;
-        overflow: hidden;
-    }
-
-    /* Quando i controlli sono visibili */
-    #controls-container.active .controls {
-        max-height: 1000px; /* Altezza massima sufficiente */
-        opacity: 1;
-        visibility: visible;
-    }
-
-    /* Disporre i controlli in colonne */
-    #controls-top,
-    #controls-top-second-row,
-    #playback-controls {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    /* Ridurre la dimensione dei pulsanti */
-    #controls-top button,
-    #controls-top-second-row button,
-    #playback-controls button {
-        padding: 10px 14px;
-        margin: 4px 0;
-        font-size: 1.2em;
-    }
-
-    /* Ridurre la dimensione dei selettori */
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        width: 80%;
-        margin: 4px 0;
-    }
-
-    /* Ottimizzare il reader per schermi piccoli */
-    #reader {
-        padding: 20px;
-        margin: 10px auto;
-        max-width: 100%;
-    }
-
-    /* Ridurre il font del reader */
-    #reader-content {
-        font-size: 16px;
-    }
-
-    /* Pulsanti playback più grandi */
-    #playback-controls button {
-        font-size: 2em;
-        padding: 16px 24px;
-    }
-}
-
-@media (max-width: 480px) {
-    header h1 {
-        font-size: 1.5em;
-    }
-
-    /* Ottimizzare i pulsanti di playback */
-    #playback-controls button {
-        font-size: 2.5em;
-        padding: 20px 28px;
-    }
-
-    /* Adattare ulteriormente il layout */
-    #controls-top,
-    #controls-top-second-row,
-    #playback-controls,
-    #controls-bottom {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    /* Aumentare la larghezza dei selettori */
-    #controls-top select,
-    #controls-top-second-row select,
-    #controls-bottom select {
-        width: 100%;
-    }
-
-    /* Ottimizzare ulteriormente il reader */
-    #reader-content {
-        font-size: 14px;
-    }
-}
-
-/* Spacing tra gli elementi */
-#controls-top > *,
-#controls-top-second-row > * {
-    margin: 2px 4px;
-}
-
-/* Pulsanti */
-#controls-top button,
-#controls-top-second-row button,
-#playback-controls button {
-    padding: 12px 16px;
-    margin: 4px;
-    font-size: 1em;
-    cursor: pointer;
-    border: none;
-    background-color: transparent;
-    color: inherit;
-    transition: color 0.3s ease, background-color 0.3s ease;
-    border-radius: 4px;
-}
-
-#controls-top button i,
-#controls-top-second-row button i,
-#playback-controls button i {
-    font-size: 1em;
-}
-
-#controls-top button:hover,
-#controls-top-second-row button:hover,
-#playback-controls button:hover {
-    color: #007BFF;
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-/* Selettori */
-#controls-top select,
-#controls-top-second-row select {
-    padding: 8px;
-    margin: 2px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.night #controls-top select,
-body.night #controls-top-second-row select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-body.sepia #controls-top select,
-body.sepia #controls-top-second-row select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
-}
-
-/* Etichette e span */
-#controls-top label,
-#controls-top-second-row label,
-#playback-controls label {
-    margin: 0 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-}
-
-#controls-top span,
-#controls-top-second-row span {
-    margin: 0 5px;
-    min-width: 30px;
-    text-align: center;
-    display: inline-block;
-    font-size: 0.9em;
-}
-
-/* Pulsanti playback (PLAY, PAUSA, STOP) più grandi */
-#playback-controls button {
-    font-size: 1.5em;
-    padding: 12px 20px;
-    margin: 5px;
-    border: 1px solid #ccc;
-}
-
-#playback-controls button i {
-    font-size: 1em;
-}
-
-/* Pulsante di selezione file personalizzato */
-.custom-file-upload {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    background-color: transparent;
-    color: inherit;
-}
-
-.custom-file-upload:hover {
-    background-color: #007BFF;
-    color: white;
-}
-
-#epubFile {
-    display: none;
-}
-
-/* Il reader */
-#reader {
-    padding: 40px;
-    margin: 20px auto;
-    max-width: 800px;
-    overflow-y: auto;
-    position: relative;
-    font-size: 18px;
-    font-family: 'Georgia', serif;
-    line-height: var(--line-height, 28.8px);
-    /* Sfondo a righe del quaderno */
-    background: repeating-linear-gradient(
-        white,
-        white calc(var(--line-height) - 1px),
-        #e6e6e6 calc(var(--line-height) - 1px),
-        #e6e6e6 var(--line-height)
-    );
-    /* Mantieni lo sfondo fisso durante lo spostamento del testo */
-    background-attachment: scroll;
-}
-
-/* Temi per il reader */
-body.sepia #reader {
-    background: repeating-linear-gradient(
-        #f4ecd8,
-        #f4ecd8 calc(var(--line-height) - 1px),
-        #e0d7c6 calc(var(--line-height) - 1px),
-        #e0d7c6 var(--line-height)
-    );
-}
-
-body.night #reader {
-    background: repeating-linear-gradient(
-        #2e2e2e,
-        #2e2e2e calc(var(--line-height) - 1px),
-        #424242 calc(var(--line-height) - 1px),
-        #424242 var(--line-height)
-    );
-}
-
-#reader img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 10px auto;
-}
-
-/* Contenuto del reader che verrà spostato */
-#reader-content {
-    transform: translateY(0px);
-    transition: transform 0.2s ease;
-}
-
-/* Stili per le parole */
-.word {
-    display: inline;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    white-space: normal; /* Assicurarsi che lo spazio bianco venga gestito correttamente */
-}
-
-/* Evidenziazione */
-.word.highlight {
-    background-color: var(--highlight-color) !important;
-}
-
-/* Spinner di caricamento */
-#spinner {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1.5em;
-}
-
-body.classic #spinner {
-    color: #555;
-}
-
-body.sepia #spinner {
-    color: #5b4636;
-}
-
-body.night #spinner {
-    color: #f5f5f5;
-}
-
-/* Barra dei controlli in basso per l'indice */
-#controls-bottom {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    transition: background-color 0.3s ease;
-}
-
-body.night #controls-bottom {
-    background-color: rgba(46, 46, 46, 0.95);
-}
-
-body.sepia #controls-bottom select {
-    background-color: #e0d7c6;
-    color: #5b4636;
-    border: 1px solid #a58e6d;
-}
-
-body.night #controls-bottom select {
-    background-color: #4a4a4a;
-    color: #f5f5f5;
-    border: 1px solid #888;
-}
-
-#controls-bottom select {
-    padding: 8px;
-    margin: 2px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Line Breaks dopo i punti */
-br {
-    display: block;
-    content: "";
-    margin: 0;
-    padding: 0;
-}
-
-/* Scrolling del reader per allineare il testo */
-#reader {
-    scroll-behavior: smooth;
+  }
+
+  .btn-row {
+    flex-direction: column;
+  }
+
+  .book-paragraph {
+    font-size: 0.96rem;
+  }
 }
