@@ -13,6 +13,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const speedRange = document.getElementById("speedRange");
   const speedValue = document.getElementById("speedValue");
 
+  // mapping slider (0–100) -> millisecondi
+  // 0  => 2000ms (lento)
+  // 100 => 60ms (super veloce)
+  function sliderValueToMs(value) {
+    const minMs = 60;
+    const maxMs = 2000;
+    const ratio = Math.max(0, Math.min(100, value)) / 100;
+    return Math.round(maxMs - (maxMs - minMs) * ratio);
+  }
+
   const state = {
     pages: [],
     currentPageIndex: 0,
@@ -20,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentWordIndex: 0,   // indice della prima parola evidenziata
     chunkSize: 4,          // quante parole max evidenziare
     autoTimerId: null,
-    autoSpeedMs: Number(speedRange.value),
+    autoSpeedMs: sliderValueToMs(Number(speedRange.value)),
     bookLoaded: false,
   };
 
@@ -51,8 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   speedRange.addEventListener("input", (e) => {
-    state.autoSpeedMs = Number(e.target.value);
-    speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(1) + " s";
+    const rawVal = Number(e.target.value);
+    state.autoSpeedMs = sliderValueToMs(rawVal);
+    speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
     if (state.autoTimerId) {
       startAuto(); // riavvia con la nuova velocità
     }
@@ -502,6 +513,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/>/g, "&gt;");
   }
 
-  // set iniziale etichetta velocità
-  speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(1) + " s";
+  // etichetta iniziale velocità
+  speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
 });
