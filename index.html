@@ -1,116 +1,84 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>Lettore EPUB</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Includi una libreria di icone (Font Awesome) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Meta tag per la responsività -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Lettore EPUB - Evidenziatore Pastello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="classic">
+<body>
+  <header class="top-bar">
+    <div class="brand">
+      <span class="logo-dot"></span>
+      <span class="brand-text">Lettore EPUB</span>
+    </div>
 
-    <header>
-        <h1><em>Lettore EPUB</em></h1>
-        <!-- Pulsante per mostrare/nascondere i controlli su mobile -->
-        <button id="toggle-controls" class="toggle-controls" title="Mostra/Nascondi Controlli">
-            <i class="fa fa-cogs"></i>
+    <label class="file-label">
+      <span>Carica EPUB</span>
+      <input type="file" id="fileInput" accept=".epub">
+    </label>
+
+    <div class="status" id="status">Nessun file caricato</div>
+  </header>
+
+  <main class="reader-layout">
+    <aside class="controls">
+      <h2>Controlli lettura</h2>
+
+      <div class="controls-group">
+        <label class="controls-label">Navigazione pagine</label>
+        <div class="btn-row">
+          <button id="prevPage" class="btn" type="button">&larr; Pagina prec.</button>
+          <button id="nextPage" class="btn" type="button">Pagina succ. &rarr;</button>
+        </div>
+        <div id="pageIndicator" class="page-indicator">Pagina 0 / 0</div>
+      </div>
+
+      <div class="controls-group">
+        <label class="controls-label">Evidenziatore</label>
+        <div class="btn-row">
+          <button id="prevChunk" class="btn btn-ghost" type="button">&larr; Indietro parole</button>
+          <button id="nextChunk" class="btn btn-ghost" type="button">Avanti parole &rarr;</button>
+        </div>
+        <button id="toggleAuto" class="btn btn-primary" type="button">
+          ▶ Auto evidenziatore
         </button>
-    </header>
+      </div>
 
-    <!-- Contenitore per le barre dei controlli in alto -->
-    <div id="controls-container">
-        <!-- Prima riga di controlli -->
-        <div id="controls-top" class="controls">
-            <!-- Pulsante per selezionare il file EPUB -->
-            <label for="epubFile" class="custom-file-upload">
-                <i class="fa fa-file-upload"></i> Seleziona EPUB
-            </label>
-            <input type="file" id="epubFile" accept=".epub" />
-
-            <!-- Frecce per regolare la posizione del testo -->
-            <button id="moveTextUp" title="Sposta il testo verso l'alto"><i class="fa fa-arrow-up"></i></button>
-            <button id="moveTextDown" title="Sposta il testo verso il basso"><i class="fa fa-arrow-down"></i></button>
-
-            <!-- Controlli per la velocità -->
-            <label for="speed">Velocità WPM:</label>
-            <button id="decreaseSpeed" title="Diminuisci la velocità"><i class="fa fa-minus"></i></button>
-            <span id="speedDisplay">200</span>
-            <button id="increaseSpeed" title="Aumenta la velocità"><i class="fa fa-plus"></i></button>
-
-            <!-- Controlli per il numero di parole evidenziate -->
-            <label for="wordCount">Parole:</label>
-            <select id="wordCountSelect">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3" selected>3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
+      <div class="controls-group">
+        <label class="controls-label">Velocità auto evidenziatore</label>
+        <input id="speedRange" type="range" min="400" max="1600" step="100" value="900">
+        <div class="speed-label">
+          <span>Lento</span>
+          <span id="speedValue">0,9 s</span>
+          <span>Veloce</span>
         </div>
+      </div>
 
-        <!-- Seconda riga di controlli -->
-        <div id="controls-top-second-row" class="controls">
-            <!-- Selettore del colore della sottolineatura -->
-            <label for="highlightColor">Colore:</label>
-            <select id="highlightColor">
-                <!-- Le opzioni dei colori verranno aggiunte in script.js -->
-            </select>
+      <p class="hint">
+        Suggerimento: clicca su un paragrafo per dirgli
+        <strong>“sto leggendo questo”</strong>.  
+        L’evidenziatore pastello seguirà 4 parole alla volta.
+      </p>
+    </aside>
 
-            <!-- Selettore del tema -->
-            <label for="themeSelect">Tema:</label>
-            <select id="themeSelect">
-                <option value="classic">Classico</option>
-                <option value="sepia">Seppia</option>
-                <option value="night">Notte</option>
-            </select>
-
-            <!-- Selettore della dimensione del testo -->
-            <label for="fontSizeSelect">Dimensione Testo:</label>
-            <select id="fontSizeSelect">
-                <!-- Opzioni da 8 a 32 verranno aggiunte in script.js -->
-            </select>
-
-            <!-- Selettore del font -->
-            <label for="fontSelect">Font:</label>
-            <select id="fontSelect">
-                <option value="'Georgia', serif">Georgia</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="'Arial', sans-serif">Arial</option>
-                <option value="'Verdana', sans-serif">Verdana</option>
-                <!-- Aggiungi altri font se lo desideri -->
-            </select>
+    <section class="book-area">
+      <div class="book-page" id="pageContainer">
+        <div class="placeholder">
+          <h1>Benvenuto 👋</h1>
+          <p>Carica un file <strong>.epub</strong> dal pulsante in alto per iniziare a leggere.</p>
+          <p>Il paragrafo che stai leggendo verrà illuminato, con <strong>4 parole alla volta</strong> evidenziate con un effetto evidenziatore pastello.</p>
         </div>
+      </div>
 
-        <!-- Controlli di riproduzione (centrati e più grandi) -->
-        <div id="playback-controls" class="controls">
-            <button id="start" title="Avvia la lettura"><i class="fa fa-play"></i></button>
-            <button id="pause" title="Metti in pausa la lettura"><i class="fa fa-pause"></i></button>
-            <button id="stop" title="Ferma la lettura"><i class="fa fa-stop"></i></button>
-        </div>
-    </div>
+      <div class="page-footer">
+        <span class="page-footer-text">Sfoglia come un libro, una pagina alla volta.</span>
+      </div>
+    </section>
+  </main>
 
-    <!-- Il reader -->
-    <div id="reader">
-        <div id="reader-content">
-            <div id="spinner">Caricamento...</div>
-            <!-- Il contenuto del libro EPUB verrà inserito qui -->
-        </div>
-    </div>
-
-    <!-- Barra dei controlli in basso per l'indice -->
-    <div id="controls-bottom">
-        <!-- Menu a tendina per l'indice -->
-        <select id="tocSelect">
-            <option value="">Indice</option>
-            <!-- Le voci dell'indice verranno aggiunte qui -->
-        </select>
-    </div>
-
-    <!-- Includi JSZip tramite CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- Includi script.js -->
-    <script src="script.js"></script>
+  <!-- Libreria JSZip per leggere gli EPUB (che sono ZIP) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
