@@ -6,14 +6,16 @@
 
 :root {
   --bg-body: radial-gradient(circle at top, #fdfcfb 0%, #e7e4ff 40%, #ffd9e6 100%);
-  --bg-book: #fdf7ec;
+  --bg-book: #ffffff; /* quaderno bianco */
   --border-soft: rgba(0, 0, 0, 0.06);
   --text-main: #222222;
   --accent: #6650ff;
   --accent-soft: rgba(102, 80, 255, 0.1);
-  --highlight-soft: rgba(255, 247, 207, 0.9);
-  --highlight-word-start: #ffeaa7;
-  --highlight-word-end: #ffd1e3;
+
+  /* evidenziatore pastello giallo */
+  --highlight-word-start: #fff9a8;
+  --highlight-word-end: #ffe28c;
+
   --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.16);
   --radius-lg: 18px;
   --radius-md: 10px;
@@ -238,7 +240,7 @@ body {
   min-width: 0;
 }
 
-/* QUI: quaderno a righe + solo scroll in basso */
+/* QUADERNO BIANCO A RIGHE, SOLO SCROLL VERTICALE */
 
 .book-page {
   flex: 1;
@@ -250,17 +252,17 @@ body {
   box-shadow: var(--shadow-soft);
   padding: 1.5rem 2rem;
   overflow-y: auto;
-  overflow-x: hidden; /* niente scroll laterale */
+  overflow-x: hidden;
   position: relative;
 
-  /* effetto quaderno a righe */
+  /* righe sottili + margine rosso stile quaderno */
   background-image:
-    linear-gradient(to right, rgba(255, 82, 82, 0.45) 60px, transparent 60px),
+    linear-gradient(to right, rgba(255, 120, 120, 0.6) 60px, transparent 60px),
     repeating-linear-gradient(
       to bottom,
-      #fdf7ec 0px,
-      #fdf7ec 23px,
-      #f1e8d2 24px
+      #ffffff 0px,
+      #ffffff 23px,
+      #f2f2f2 24px
     );
   background-size: 100% 100%;
 }
@@ -268,7 +270,7 @@ body {
 .page-inner {
   max-width: 60ch;
   margin: 0 auto;
-  padding-left: 50px; /* testo dopo il margine rosso del quaderno */
+  padding-left: 50px; /* testo dopo il margine rosso */
 }
 
 .page-footer {
@@ -309,41 +311,45 @@ body {
   margin: 0.85rem 0;
   font-size: 1rem;
   color: #262626;
-  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-  padding: 0.15rem 0.35rem;
-  border-radius: var(--radius-md);
+  padding: 0;                 /* NIENTE BOX */
+  border-radius: 0;           /* NIENTE CARD */
   cursor: pointer;
-  background-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  transition: color var(--transition-fast);
 }
 
 .book-paragraph:hover {
-  background: rgba(255, 255, 255, 0.4);
+  /* al massimo leggero cambio colore testo, ma niente sfondo */
+  color: #111;
 }
 
+/* Paragrafo attivo: solo un piccolo bordo sinistro, niente sfondo */
 .book-paragraph.active-paragraph {
-  background: linear-gradient(135deg, rgba(255, 247, 210, 0.95), rgba(255, 255, 255, 0.7));
-  box-shadow: 0 0 0 1px rgba(255, 220, 150, 0.5), 0 8px 18px rgba(0, 0, 0, 0.08);
-  padding: 0.25rem 0.7rem;
-  transform: translateY(-1px);
+  background: transparent;
+  box-shadow: none;
+  padding-left: 0.5rem;
+  border-left: 3px solid rgba(255, 200, 120, 0.8);
 }
 
 /* Parole & evidenziatore pastello */
 
 .book-paragraph .word {
   display: inline;
-  white-space: normal;       /* ← ora il testo VA A CAPO normalmente */
+  white-space: normal;
   word-wrap: break-word;
 }
 
+/* SOLO IL PASTELLO GIALLO, BEN VISIBILE SUL BIANCO */
 .word-highlight {
   background: linear-gradient(
     120deg,
     var(--highlight-word-start),
     var(--highlight-word-end)
   );
-  border-radius: 0.22em;
+  border-radius: 0.18em;
   padding: 0 0.04em;
-  box-shadow: 0 0 0.55em rgba(255, 205, 150, 0.9);
+  box-shadow: 0 0 0.45em rgba(255, 214, 130, 0.8);
 }
 
 /* Indicatore pagina */
