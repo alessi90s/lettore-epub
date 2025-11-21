@@ -35,6 +35,7 @@ body {
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg-body);
+  color: --text-main;
   color: var(--text-main);
   display: flex;
   flex-direction: column;
@@ -242,23 +243,23 @@ body {
   min-width: 0;
 }
 
-/* Quaderno: più stretto e “aderente” al testo */
+/* Quaderno: più stretto e vicino al testo */
 
 .book-page {
   width: 100%;
-  max-width: 680px;          /* più stretto rispetto a prima */
+  max-width: 560px;          /* più stretto di prima */
   max-height: 80vh;
   background-color: var(--bg-book);
   margin: 0 auto;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
-  padding: var(--line-step) 1.4rem;
+  padding: var(--line-step) 1rem;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
 
   background-image:
-    linear-gradient(to right, rgba(255, 120, 120, 0.6) 50px, transparent 50px),
+    linear-gradient(to right, rgba(255, 120, 120, 0.6) 46px, transparent 46px),
     repeating-linear-gradient(
       to bottom,
       #ffffff 0px,
@@ -269,10 +270,12 @@ body {
 }
 
 .page-inner {
-  max-width: 46ch;           /* colonna testo più stretta */
+  max-width: 40ch;           /* colonna testo più stretta */
   margin: 0 auto;
-  padding-left: 40px;        /* dopo margine rosso */
+  padding-left: 32px;        /* dopo il margine rosso */
 }
+
+/* Footer sotto al quaderno */
 
 .page-footer {
   margin-top: 0.6rem;
@@ -288,16 +291,18 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-/* Placeholder iniziale */
+/* Placeholder iniziale (Benvenuto) */
 
 .placeholder {
-  text-align: center;
-  margin-top: 10%;
+  margin-top: 0;               /* niente spazio enorme sopra */
+  text-align: left;            /* testo come una pagina vera */
+  line-height: 1.5;
 }
 
 .placeholder h1 {
-  margin: 0 0 0.5rem;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
+  margin: 0 0 0.4rem;
+  font-weight: 700;
 }
 
 .placeholder p {
@@ -384,12 +389,12 @@ body {
 
   .book-page {
     max-width: 100%;
-    padding: var(--line-step) 1.1rem;
+    padding: var(--line-step) 0.9rem;
   }
 
   .page-inner {
     max-width: 100%;
-    padding-left: 35px;
+    padding-left: 30px;
   }
 
   .status {
