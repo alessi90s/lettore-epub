@@ -1,4 +1,4 @@
-// Lettore EPUB mobile-friendly con evidenziatore pastello + salvataggio progressi
+// Lettore EPUB mobile-friendly con evidenziatore pastello + salvataggio progressi + auto-scroll
 
 const WELCOME_HTML = `
   <div class="placeholder">
@@ -19,14 +19,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const prevChunkBtn = document.getElementById("prevChunk");
   const nextChunkBtn = document.getElementById("nextChunk");
   const toggleAutoBtn = document.getElementById("toggleAuto");
-  const speedRange = document.getElementById("speedRange");
+  const speedDownBtn = document.getElementById("speedDown");
+  const speedUpBtn = document.getElementById("speedUp");
   const speedValue = document.getElementById("speedValue");
   const controlsBar = document.getElementById("controlsBar");
   const fabControls = document.getElementById("fabControls");
+  const autoScrollToggle = document.getElementById("autoScrollToggle");
 
-  // Slider velocità: 0 => 5 s, 100 => 0,2 s
+  // Slider virtuale: 0 => 5 s, 100 => 0,2 s
+  const SPEED_MIN = 0;
+  const SPEED_MAX = 100;
+  const SPEED_STEP = 10;
+  const SPEED_DEFAULT = 40;
+
   function sliderValueToMs(value) {
-    const v = Math.max(0, Math.min(100, Number(value)));
+    const v = Math.max(SPEED_MIN, Math.min(SPEED_MAX, Number(value)));
     const slowMs = 5000;
     const fastMs = 200;
     const t = v / 100;
@@ -40,10 +47,18 @@ document.addEventListener("DOMContentLoaded", () => {
     currentWordIndex: 0,
     chunkSize: 4,
     autoTimerId: null,
-    autoSpeedMs: sliderValueToMs(speedRange.value),
+    speedSliderValue: SPEED_DEFAULT,
+    autoSpeedMs: sliderValueToMs(SPEED_DEFAULT),
     bookLoaded: false,
-    bookKey: null // chiave per localStorage
+    bookKey: null,
+    autoScrollEnabled: true
   };
+
+  function updateSpeedLabel() {
+    speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
+  }
+
+  updateSpeedLabel();
 
   /* -------- EVENTI UI -------- */
 
@@ -78,13 +93,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  speedRange.addEventListener("input", (e) => {
-    const rawVal = Number(e.target.value);
-    state.autoSpeedMs = sliderValueToMs(rawVal);
-    speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
+  speedDownBtn.addEventListener("click", () => {
+    state.speedSliderValue = Math.max(SPEED_MIN, state.speedSliderValue - SPEED_STEP);
+    state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
+    updateSpeedLabel();
     if (state.autoTimerId) {
       startAuto();
     }
+  });
+
+  speedUpBtn.addEventListener("click", () => {
+    state.speedSliderValue = Math.min(SPEED_MAX, state.speedSliderValue + SPEED_STEP);
+    state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
+    updateSpeedLabel();
+    if (state.autoTimerId) {
+      startAuto();
+    }
+  });
+
+  // Toggle auto-scroll
+  autoScrollToggle.addEventListener("change", (e) => {
+    state.autoScrollEnabled = !!e.target.checked;
   });
 
   // FAB per aprire/chiudere i comandi su mobile
@@ -93,13 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const isOpen = controlsBar.classList.toggle("controls-open");
       fabControls.textContent = isOpen ? "✕" : "☰";
     });
-  }
-
-  function closeControlsPanel() {
-    if (controlsBar.classList.contains("controls-open")) {
-      controlsBar.classList.remove("controls-open");
-      if (fabControls) fabControls.textContent = "☰";
-    }
   }
 
   // Barra spaziatrice = play/pausa (desktop)
@@ -114,8 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
-
-  speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
 
   /* -------- GESTIONE FILE -------- */
 
@@ -267,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.pages = pages;
   }
 
-  // renderPage ora accetta opzionalmente "restore" per riprendere posizione
+  // renderPage accetta opzionalmente "restore" per riprendere posizione
   function renderPage(pageIndex, restore) {
     if (!state.pages.length) return;
     if (pageIndex < 0 || pageIndex >= state.pages.length) return;
@@ -306,14 +326,14 @@ document.addEventListener("DOMContentLoaded", () => {
       setActiveParagraph(safePara);
       state.currentWordIndex = Math.max(0, restore.wordIndex || 0);
       updateWordHighlight();
-      scrollActiveParagraphIntoView();
+      scrollToCurrentHighlight();
     } else {
       setActiveParagraph(0);
-      scrollActiveParagraphIntoView();
+      scrollToCurrentHighlight();
     }
 
     updatePageIndicator();
-    closeControlsPanel();
+    // NOTA: NON chiudiamo più il menù quando cambi pagina
   }
 
   function updatePageIndicator() {
@@ -341,17 +361,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function scrollActiveParagraphIntoView() {
-    const active = pageContainer.querySelector(".book-paragraph.active-paragraph");
-    if (!active) return;
-    const parent = active.closest(".book-page") || pageContainer.parentElement;
-    if (!parent) return;
-    const rect = active.getBoundingClientRect();
-    const parentRect = parent.getBoundingClientRect();
+  /* -------- SCROLL AUTO SULL'EVIDENZIATO -------- */
 
-    if (rect.top < parentRect.top + 60 || rect.bottom > parentRect.bottom - 60) {
-      active.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
+  function scrollToCurrentHighlight() {
+    if (!state.autoScrollEnabled) return;
+
+    const activeWord = pageContainer.querySelector(
+      ".book-paragraph.active-paragraph .word-highlight"
+    );
+    const target = activeWord ||
+      pageContainer.querySelector(".book-paragraph.active-paragraph");
+
+    if (!target) return;
+
+    target.scrollIntoView({
+      block: "center",
+      behavior: "smooth"
+    });
   }
 
   /* -------- EVIDENZIATORE -------- */
@@ -408,7 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentParagraphIndex = clampedIndex;
     state.currentWordIndex = 0;
     updateWordHighlight();
-    scrollActiveParagraphIntoView();
+    scrollToCurrentHighlight();
   }
 
   function updateWordHighlight() {
@@ -440,6 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
       words[i].classList.add("word-highlight");
     }
 
+    scrollToCurrentHighlight();
     saveProgress(); // ogni volta che cambia evidenziazione, salvo
   }
 
@@ -569,7 +596,6 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       localStorage.setItem(state.bookKey, JSON.stringify(data));
     } catch (e) {
-      // se lo storage è pieno, amen
       console.warn("Impossibile salvare i progressi:", e);
     }
   }
