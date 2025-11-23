@@ -1,5 +1,9 @@
-// Lettore EPUB con evidenziatore pastello, salvataggio progressi, auto-scroll
-// + font / dimensione testo / colore evidenziatore regolabili
+// Lettore EPUB con:
+// - 1 "pagina" = 1 capitolo (spine EPUB)
+// - evidenziatore pastello a parole
+// - salvataggio progressi per libro
+// - font / dimensione / colore evidenziatore personalizzabili
+// - velocità discrete da 0.70s a 0.20s
 
 const WELCOME_HTML = `
   <div class="placeholder">
@@ -38,26 +42,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // --- costanti per velocità auto ---
-  const SPEED_MIN = 0;
-  const SPEED_MAX = 100;
-  const SPEED_STEP = 10;
-  const SPEED_DEFAULT = 40;
+  // --- velocità fisse (ms) ---
+  // corrispondono a: 0.70, 0.65, 0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20
+  const SPEED_STEPS_MS = [700, 650, 600, 550, 500, 450, 400, 350, 300, 250, 200];
+  const DEFAULT_SPEED_INDEX = 6; // 0.40 s
 
-  function sliderValueToMs(value) {
-    const v = Math.max(SPEED_MIN, Math.min(SPEED_MAX, Number(value)));
-    const slowMs = 5000;
-    const fastMs = 200;
-    const t = v / 100;
-    return Math.round(slowMs - (slowMs - fastMs) * t);
-  }
-
-  // --- costanti per font / dimensione ---
+  // --- font / dimensione ---
   const DEFAULT_FONT_SIZE_PX = 18;
   const MIN_FONT_SIZE_PX = 14;
   const MAX_FONT_SIZE_PX = 26;
 
-  const SETTINGS_KEY = "epub-reader-settings-v1";
+  const SETTINGS_KEY = "epub-reader-settings-v2";
 
   const FONT_STACKS = {
     system: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -67,14 +62,14 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const state = {
-    pages: [],
-    currentPageIndex: 0,
+    pages: [], // ora: array di capitoli, ogni capitolo = array di paragrafi
+    currentPageIndex: 0, // in realtà "chapterIndex"
     currentParagraphIndex: 0,
     currentWordIndex: 0,
     chunkSize: 4,
     autoTimerId: null,
-    speedSliderValue: SPEED_DEFAULT,
-    autoSpeedMs: sliderValueToMs(SPEED_DEFAULT),
+    speedIndex: DEFAULT_SPEED_INDEX,
+    autoSpeedMs: SPEED_STEPS_MS[DEFAULT_SPEED_INDEX],
     bookLoaded: false,
     bookKey: null,
     autoScrollEnabled: true,
@@ -83,12 +78,25 @@ document.addEventListener("DOMContentLoaded", () => {
     fontFamilyKey: "system"
   };
 
-  // --- applicazione impostazioni UI globali ---
+  /* ---------- UTIL ---------- */
+
+  function clamp(num, min, max) {
+    return Math.min(Math.max(num, min), max);
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /* ---------- IMPOSTAZIONI GLOBALI (font, highlight, velocità) ---------- */
 
   function applyFontSize(px, skipSave) {
     let val = Number(px);
     if (!Number.isFinite(val)) val = DEFAULT_FONT_SIZE_PX;
-    val = Math.max(MIN_FONT_SIZE_PX, Math.min(MAX_FONT_SIZE_PX, val));
+    val = clamp(val, MIN_FONT_SIZE_PX, MAX_FONT_SIZE_PX);
     state.fontSizePx = val;
     const lineStep = Math.round(val * 1.6);
 
@@ -103,13 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function applyHighlightColor(color, skipSave) {
     if (typeof color !== "string") return;
-    // accetto sia #rgb che #rrggbb
     if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color)) return;
     state.highlightColor = color;
     document.documentElement.style.setProperty("--highlight-word", color);
-    if (highlightPicker) {
-      highlightPicker.value = color;
-    }
+    if (highlightPicker) highlightPicker.value = color;
     if (!skipSave) saveSettings();
   }
 
@@ -117,54 +122,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const stack = FONT_STACKS[key] || FONT_STACKS.system;
     state.fontFamilyKey = key in FONT_STACKS ? key : "system";
     document.documentElement.style.setProperty("--book-font-family", stack);
-    if (fontSelect) {
-      fontSelect.value = state.fontFamilyKey;
-    }
+    if (fontSelect) fontSelect.value = state.fontFamilyKey;
     if (!skipSave) saveSettings();
   }
 
   function updateSpeedLabel() {
-    if (speedValue) {
-      speedValue.textContent = (state.autoSpeedMs / 1000).toFixed(2) + " s";
-    }
+    if (!speedValue) return;
+    const seconds = state.autoSpeedMs / 1000;
+    speedValue.textContent = seconds.toFixed(2) + " s";
   }
-
-  // --- caricamento impostazioni salvate ---
-
-  (function loadSettings() {
-    try {
-      const raw = localStorage.getItem(SETTINGS_KEY);
-      if (!raw) {
-        applyFontFamily("system", true);
-        applyFontSize(DEFAULT_FONT_SIZE_PX, true);
-        applyHighlightColor("#ffef7d", true);
-        updateSpeedLabel();
-        return;
-      }
-      const s = JSON.parse(raw);
-      if (s.fontFamilyKey) applyFontFamily(s.fontFamilyKey, true);
-      else applyFontFamily("system", true);
-
-      if (s.fontSizePx) applyFontSize(s.fontSizePx, true);
-      else applyFontSize(DEFAULT_FONT_SIZE_PX, true);
-
-      if (s.highlightColor) applyHighlightColor(s.highlightColor, true);
-      else applyHighlightColor("#ffef7d", true);
-    } catch {
-      applyFontFamily("system", true);
-      applyFontSize(DEFAULT_FONT_SIZE_PX, true);
-      applyHighlightColor("#ffef7d", true);
-    }
-
-    state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
-    updateSpeedLabel();
-  })();
 
   function saveSettings() {
     const data = {
       fontSizePx: state.fontSizePx,
       highlightColor: state.highlightColor,
-      fontFamilyKey: state.fontFamilyKey
+      fontFamilyKey: state.fontFamilyKey,
+      speedIndex: state.speedIndex
     };
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
@@ -173,7 +146,52 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* -------- EVENTI UI -------- */
+  (function loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) {
+        applyFontFamily("system", true);
+        applyFontSize(DEFAULT_FONT_SIZE_PX, true);
+        applyHighlightColor("#ffef7d", true);
+        state.speedIndex = DEFAULT_SPEED_INDEX;
+        state.autoSpeedMs = SPEED_STEPS_MS[state.speedIndex];
+        updateSpeedLabel();
+        return;
+      }
+      const s = JSON.parse(raw);
+
+      // font
+      if (s.fontFamilyKey) applyFontFamily(s.fontFamilyKey, true);
+      else applyFontFamily("system", true);
+
+      // size
+      if (s.fontSizePx) applyFontSize(s.fontSizePx, true);
+      else applyFontSize(DEFAULT_FONT_SIZE_PX, true);
+
+      // highlight
+      if (s.highlightColor) applyHighlightColor(s.highlightColor, true);
+      else applyHighlightColor("#ffef7d", true);
+
+      // speed
+      if (typeof s.speedIndex === "number") {
+        const idx = clamp(s.speedIndex, 0, SPEED_STEPS_MS.length - 1);
+        state.speedIndex = idx;
+      } else {
+        state.speedIndex = DEFAULT_SPEED_INDEX;
+      }
+      state.autoSpeedMs = SPEED_STEPS_MS[state.speedIndex];
+      updateSpeedLabel();
+    } catch {
+      applyFontFamily("system", true);
+      applyFontSize(DEFAULT_FONT_SIZE_PX, true);
+      applyHighlightColor("#ffef7d", true);
+      state.speedIndex = DEFAULT_SPEED_INDEX;
+      state.autoSpeedMs = SPEED_STEPS_MS[state.speedIndex];
+      updateSpeedLabel();
+    }
+  })();
+
+  /* ---------- EVENTI UI ---------- */
 
   if (fileInput) {
     fileInput.addEventListener("change", handleFileChange);
@@ -217,19 +235,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (speedDownBtn) {
+    // meno = più lento
     speedDownBtn.addEventListener("click", () => {
-      state.speedSliderValue = Math.max(SPEED_MIN, state.speedSliderValue - SPEED_STEP);
-      state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
+      state.speedIndex = clamp(
+        state.speedIndex + 1,
+        0,
+        SPEED_STEPS_MS.length - 1
+      );
+      state.autoSpeedMs = SPEED_STEPS_MS[state.speedIndex];
       updateSpeedLabel();
+      saveSettings();
       if (state.autoTimerId) startAuto();
     });
   }
 
   if (speedUpBtn) {
+    // più = più veloce
     speedUpBtn.addEventListener("click", () => {
-      state.speedSliderValue = Math.min(SPEED_MAX, state.speedSliderValue + SPEED_STEP);
-      state.autoSpeedMs = sliderValueToMs(state.speedSliderValue);
+      state.speedIndex = clamp(
+        state.speedIndex - 1,
+        0,
+        SPEED_STEPS_MS.length - 1
+      );
+      state.autoSpeedMs = SPEED_STEPS_MS[state.speedIndex];
       updateSpeedLabel();
+      saveSettings();
       if (state.autoTimerId) startAuto();
     });
   }
@@ -290,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* -------- GESTIONE FILE -------- */
+  /* ---------- GESTIONE FILE / CAPITOLI ---------- */
 
   async function handleFileChange(event) {
     const file = event.target.files && event.target.files[0];
@@ -305,13 +335,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const arrayBuffer = await file.arrayBuffer();
-      const paragraphs = await extractParagraphsFromEpub(arrayBuffer);
+      const chapters = await extractChaptersFromEpub(arrayBuffer);
 
-      if (!paragraphs.length) {
-        throw new Error("Nessun testo leggibile trovato nell'EPUB.");
+      if (!chapters.length) {
+        throw new Error("Nessun capitolo leggibile trovato nell'EPUB.");
       }
 
-      buildPages(paragraphs);
+      // Ogni "pagina" ora è un capitolo
+      state.pages = chapters;
 
       // Chiave per i progressi di questo libro
       const fileKey = `epub-progress:${file.name}:${file.size}`;
@@ -325,16 +356,21 @@ document.addEventListener("DOMContentLoaded", () => {
         resume = null;
       }
 
-      if (resume && typeof resume.pageIndex === "number") {
-        const safePage = clamp(resume.pageIndex, 0, state.pages.length - 1);
+      if (
+        resume &&
+        typeof resume.pageIndex === "number" &&
+        resume.pageIndex >= 0 &&
+        resume.pageIndex < state.pages.length
+      ) {
+        const safePage = resume.pageIndex;
         renderPage(safePage, {
           paragraphIndex: resume.paragraphIndex || 0,
           wordIndex: resume.wordIndex || 0
         });
-        statusEl.textContent = `File caricato: ${file.name} • Ripreso a pagina ${safePage + 1}`;
+        statusEl.textContent = `File caricato: ${file.name} • Capitolo ${safePage + 1} di ${state.pages.length}`;
       } else {
         renderPage(0, null);
-        statusEl.textContent = `File caricato: ${file.name} • Paragrafi: ${paragraphs.length}`;
+        statusEl.textContent = `File caricato: ${file.name} • Capitoli: ${state.pages.length}`;
       }
 
       state.bookLoaded = true;
@@ -365,33 +401,83 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
-   * Estrae paragrafi:
-   * - apre zip con JSZip
-   * - prende tutti i .xhtml/.html (escluso nav.xhtml)
-   * - li ordina per nome
-   * - estrae body > p/div/li/h*
+   * Estrae i capitoli usando:
+   * - META-INF/container.xml -> percorso OPF
+   * - file OPF: manifest + spine per ordine di lettura
+   * Ogni capitolo = array di paragrafi (stringhe).
    */
-  async function extractParagraphsFromEpub(arrayBuffer) {
+  async function extractChaptersFromEpub(arrayBuffer) {
     const zip = await JSZip.loadAsync(arrayBuffer);
     const parser = new DOMParser();
-    const paragraphs = [];
-    const htmlPaths = [];
 
-    zip.forEach((relativePath, file) => {
-      if (file.dir) return;
-      if (/nav\.x?html$/i.test(relativePath)) return;
-      if (/\.(xhtml|html)$/i.test(relativePath)) {
-        htmlPaths.push(relativePath);
+    // 1) Trova file OPF dal container.xml
+    let opfPath = null;
+    const containerFile = zip.file("META-INF/container.xml");
+    if (containerFile) {
+      try {
+        const xml = await containerFile.async("string");
+        const doc = parser.parseFromString(xml, "application/xml");
+        const rootfile = doc.querySelector("rootfile");
+        if (rootfile) {
+          opfPath = rootfile.getAttribute("full-path");
+        }
+      } catch (e) {
+        console.warn("Errore lettura container.xml:", e);
       }
-    });
-
-    if (!htmlPaths.length) {
-      throw new Error("Nessun capitolo HTML trovato nello zip.");
     }
 
-    htmlPaths.sort();
+    let spineHrefs = [];
 
-    for (const path of htmlPaths) {
+    if (opfPath && zip.file(opfPath)) {
+      try {
+        const opfXml = await zip.file(opfPath).async("string");
+        const opfDoc = parser.parseFromString(opfXml, "application/xml");
+
+        // manifest: id -> href (solo html/xhtml)
+        const manifest = new Map();
+        opfDoc.querySelectorAll("manifest > item").forEach((item) => {
+          const id = item.getAttribute("id");
+          const href = item.getAttribute("href");
+          const mediaType = item.getAttribute("media-type") || "";
+          if (id && href && /xhtml|html/i.test(mediaType)) {
+            manifest.set(id, href);
+          }
+        });
+
+        const opfDir =
+          opfPath && opfPath.includes("/")
+            ? opfPath.slice(0, opfPath.lastIndexOf("/") + 1)
+            : "";
+
+        opfDoc.querySelectorAll("spine > itemref").forEach((itemref) => {
+          const idref = itemref.getAttribute("idref");
+          const href = manifest.get(idref);
+          if (href) {
+            spineHrefs.push(opfDir + href);
+          }
+        });
+      } catch (e) {
+        console.warn("Errore lettura OPF:", e);
+      }
+    }
+
+    // Fallback: niente spine -> ordinamento alfabetico dei file html
+    if (!spineHrefs.length) {
+      const htmlPaths = [];
+      zip.forEach((relativePath, file) => {
+        if (file.dir) return;
+        if (/nav\.x?html$/i.test(relativePath)) return;
+        if (/\.(xhtml|html)$/i.test(relativePath)) {
+          htmlPaths.push(relativePath);
+        }
+      });
+      htmlPaths.sort();
+      spineHrefs = htmlPaths;
+    }
+
+    const chapters = [];
+
+    for (const path of spineHrefs) {
       const file = zip.file(path);
       if (!file) continue;
 
@@ -401,44 +487,25 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!body) continue;
 
       const blocks = body.querySelectorAll("p, div, li, h1, h2, h3, h4");
+      const chapterParas = [];
+
       blocks.forEach((node) => {
         const text = (node.textContent || "").replace(/\s+/g, " ").trim();
         if (text.length > 30) {
-          paragraphs.push(text);
+          chapterParas.push(text);
         }
       });
-    }
 
-    return paragraphs;
-  }
-
-  /* -------- PAGINAZIONE -------- */
-
-  function buildPages(paragraphs) {
-    const CHARS_PER_PAGE = 1500;
-    const pages = [];
-    let currentPage = [];
-    let currentCount = 0;
-
-    paragraphs.forEach((pText) => {
-      const len = pText.length;
-      if (currentPage.length && currentCount + len > CHARS_PER_PAGE) {
-        pages.push(currentPage);
-        currentPage = [];
-        currentCount = 0;
+      if (chapterParas.length) {
+        chapters.push(chapterParas);
       }
-      currentPage.push(pText);
-      currentCount += len;
-    });
-
-    if (currentPage.length) {
-      pages.push(currentPage);
     }
 
-    state.pages = pages;
+    return chapters;
   }
 
-  // renderPage accetta opzionalmente "restore" per riprendere posizione
+  /* ---------- RENDER CAPITOLO + PAGINAZIONE ---------- */
+
   function renderPage(pageIndex, restore) {
     if (!state.pages.length) return;
     if (pageIndex < 0 || pageIndex >= state.pages.length) return;
@@ -508,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* -------- SCROLL AUTO SULL'EVIDENZIATO -------- */
+  /* ---------- SCROLL AUTO SULL'EVIDENZIATO ---------- */
 
   function scrollToCurrentHighlight() {
     if (!state.autoScrollEnabled) return;
@@ -527,7 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* -------- EVIDENZIATORE -------- */
+  /* ---------- EVIDENZIATORE ---------- */
 
   function getSentenceBoundaries(words) {
     const sentenceStarts = [0];
@@ -649,6 +716,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const lastIdx = newParas.length - 1;
         newParas.forEach((p) => p.classList.remove("active-paragraph"));
         const lastPara = newParas[lastIdx];
+        lastPara.addClass;
         lastPara.classList.add("active-paragraph");
         state.currentParagraphIndex = lastIdx;
 
@@ -713,7 +781,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateWordHighlight();
   }
 
-  /* -------- AUTO -------- */
+  /* ---------- AUTO ---------- */
 
   function startAuto() {
     stopAuto();
@@ -735,12 +803,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* -------- SALVATAGGIO PROGRESSO -------- */
+  /* ---------- SALVATAGGIO PROGRESSO ---------- */
 
   function saveProgress() {
     if (!state.bookKey) return;
     const data = {
-      pageIndex: state.currentPageIndex,
+      pageIndex: state.currentPageIndex, // ora = capitolo
       paragraphIndex: state.currentParagraphIndex,
       wordIndex: state.currentWordIndex
     };
@@ -749,18 +817,5 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {
       console.warn("Impossibile salvare i progressi:", e);
     }
-  }
-
-  /* -------- UTIL -------- */
-
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
-  function clamp(num, min, max) {
-    return Math.min(Math.max(num, min), max);
   }
 });
